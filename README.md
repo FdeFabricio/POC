@@ -1,10 +1,9 @@
-# POC: Ferramenta para Extração de Propriedades e Análise de Múltiplas Camadas de Sensoriamento
+Ferramenta para Extração de Propriedades e Análise de Múltiplas Camadas de Sensoriamento
+====
+## Property extraction
 
-Property extraction
-========
+### Spatial Coverage
 
-Spatial Coverage
-----
 This property represents the area the data is inserted into. It receives the longitude and latitude columns and returns the extreme coordinates (maximum and minimum), forming a bounding box.
 
 ##### Parameters
