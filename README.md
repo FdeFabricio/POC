@@ -27,6 +27,9 @@ ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 -74.06077 40.63317 -73.76324  40.84902
 ```
 2. `spCoverage(ig$lon, ig$lat, TRUE)` returns:
+
+![](https://github.com/FdeFabricio/POC/blob/master/img/spCoverage1.jpg)
+
 3. `spCoverage(ig$lon, ig$lat, plotBbox=TRUE, plotData=TRUE)` returns:
 4. `spCoverage(ig$lon, ig$lat, TRUE, "red", TRUE, "white")` returns:
 
