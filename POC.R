@@ -2,29 +2,40 @@ library(ggmap)
 library(rgeos)
 library(raster)
 
-getExtremes <- function(list)
+
+#' Get Extremes.
+#'
+#' \code(getExtremes) returns a vector with the maximum and the minimum element of the input vector.
+#'
+#' @param v Input vector.
+#'
+#' @return A 2-element vector (min, max).
+#'
+#' @examples
+#' x <- (1,2,3,4,5)
+#' getExtremes(x)
+getExtremes <- function(v)
 {
-  x <- c(min(list), max(list))
-  return(x)
+  return(c(min(v), max(v)))
 }
 
 #' Spatial Coverage.
-#' 
+#'
 #' \code(spCoverage) returns the spatial coverage of a given dataframe.
-#' 
-#' This property represents the area the data is inserted into. It receives the 
-#' longitude and latitude columns and returns the extreme coordinates (maximum 
+#'
+#' This property represents the area the data is inserted into. It receives the
+#' longitude and latitude columns and returns the extreme coordinates (maximum
 #' and minimum), forming a bounding box.
-#' 
+#'
 #' @param lon Longitude column.
 #' @param lat Latitude column.
-#' @return The output is a vector with max and min coordinates, as a bounding 
+#' @return The output is a vector with max and min coordinates, as a bounding
 #'   box.
-#'   
-#'   If \code{plotBbox} is TRUE, it plots the bounding box with the colour 
+#'
+#'   If \code{plotBbox} is TRUE, it plots the bounding box with the colour
 #'   informed in \code{colourBbox}.
-#'   
-#'   If \code{plotData} is TRUE, it plots also the data as points with the 
+#'
+#'   If \code{plotData} is TRUE, it plots also the data as points with the
 #'   colour informed in \code{colourData}.
 spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FALSE, colourData="yellow")
 {
@@ -35,13 +46,13 @@ spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FA
     return(coverage)
   }
   print(coverage)
-  
+
   myMap <-get_map(location=coverage, source="stamen", maptype="watercolor", crop=FALSE)
-  
+
   x <- c(coverage["left"], coverage["left"], coverage["right"], coverage["right"])
   y <- c(coverage["bottom"], coverage["top"], coverage["top"], coverage["bottom"])
   df <- data.frame(x, y)
-  
+
   # Plotting
   dataPlot <- geom_blank()
   areaPlot <- geom_polygon(aes(x=x, y=y), data=df, colour=colourBbox, fill=colourBbox, alpha=.4, size=.3)
@@ -53,9 +64,17 @@ spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FA
 
 }
 
+#' Title
+#'
+#' @param list
+#'
+#' @return
+#' @export
+#'
+#' @examples
 spCoverageList <- function(list)
 {
-  coord <- list(lon=c(),lat=c()) 
+  coord <- list(lon=c(),lat=c())
   polygon <- list()
   names <- names(list)
   for (i in 1:length(list))
@@ -63,31 +82,44 @@ spCoverageList <- function(list)
     lon <- list[[i]][[1]]
     lat <- list[[i]][[2]]
     colour <- list[[i]][[3]]
-    
+
     coverage <- spCoverage(lon, lat)
-    
+
     coord$lon[length(coord$lon)+1] <- coverage$lonR[1]
     coord$lon[length(coord$lon)+1] <- coverage$lonR[2]
     coord$lat[length(coord$lat)+1] <- coverage$latR[1]
     coord$lat[length(coord$lat)+1] <- coverage$latR[2]
-    
+
     x <- c(coverage$lonR[1], coverage$lonR[1], coverage$lonR[2], coverage$lonR[2])
     y <- c(coverage$latR[1], coverage$latR[2], coverage$latR[2], coverage$latR[1])
     df.coverage = data.frame(x, y)
     polygon[[names[i]]] <- geom_polygon(aes(x=x, y=y), data=data.frame(x, y), colour = colour, fill = colour, alpha = .4, size = .3)
-    
+
   }
   myLocation <- c(min(coord$lon), min(coord$lat), max(coord$lon), max(coord$lat))
   myMap <-get_map(location=myLocation, source="stamen", maptype="watercolor", crop=FALSE)
-  
+
   ggmap(myMap)+polygon
-  
+
 }
 
-tpCoverage <- function(dataColumn, diff=FALSE)
+#' Temporal Coverage.
+#'
+#' \code(tpCoverage) returns the temporal coverage of a given dataframe.
+#' 
+#' @param column Column with timestamp data.
+#' @param printDiff If TRUE prints also the date range difference.
+#'
+#' @return A two element vector with the first and last timestamp (earliest and latest).
+#'
+#' @examples
+#' randomTimestamps <- as.POSIXct(runif(100,946684800,as.numeric(Sys.time())), origin="1970-1-1")
+#' tpCoverage(randomTimestamps)
+#' tpCoverage(randomTimestamps,TRUE)
+tpCoverage <- function(column, printDiff=FALSE)
 {
-  x <- getExtremes(dataColumn)
-  if(diff) print(x[2]-x[1])
+  x <- getExtremes(column)
+  if(printDiff) print(x[2]-x[1])
   return(x)
 }
 
@@ -198,13 +230,13 @@ groupFrequency <- function(timestamp,value=NULL,by,fun=sum)
   year <- year+1900
   wday <- wday+1
   yday <- yday+1
-  
+
   by2 <- list()
   for (i in 1:length(by))
   {
     by2[[by[[i]]]] <- eval(parse(text=by[[i]]))
   }
-  
+
   if (is.null(value))
   {
     count <- 1
@@ -221,17 +253,17 @@ groupFrequency <- function(timestamp,value=NULL,by,fun=sum)
 spDistribution <- function(x, y, nx, ny, plot=F, col="red")
 {
   stopifnot(length(x) == length(y))
-  
+
   minX <- min(x)
   minY <- min(y)
   maxX <- max(x)
   maxY <- max(y)
-  
+
   m <- matrix(0,nrow=nx,ncol=ny)
-  
+
   xStep <- (maxX-minX)/nx
   yStep <- (maxY-minY)/ny
-  
+
   for (i in 1:length(x))
   {
     a <- floor(abs((x[i]-minX)/xStep))+1
@@ -249,19 +281,19 @@ spDistribution <- function(x, y, nx, ny, plot=F, col="red")
     xy <- SpatialPoints(cbind(x,y))
     tab <- table(cellFromXY(r, xy))
     r[as.numeric(names(tab))] <- 1
-    
+
     breakpoints <- c(0,0.5,1)
     colors <- c(adjustcolor("white",alpha.f=0),adjustcolor(col,alpha.f=0.7))
     rasterPlot <- as.raster(r,breaks=breakpoints,col=colors)
-    
+
     # basemap
     map <- get_map(location=bbox(r), zoom=11)
-    
+
     # bbox plot
     x <- c(bbox(r)[1],bbox(r)[1],bbox(r)[3],bbox(r)[3])
     y <- c(bbox(r)[2],bbox(r)[4],bbox(r)[4],bbox(r)[2])
     bboxPlot <- geom_polygon(aes(x=x, y=y), data=data.frame(x, y), colour = col, fill = NA)
-    
+
     # generate plot
     ggmap(map)+inset_raster(rasterPlot,xmin=bbox(r)[1,1],ymin=bbox(r)[2,1],xmax=bbox(r)[1,2],ymax=bbox(r)[2,2])+bboxPlot
   }
@@ -280,7 +312,7 @@ tpDistribution <- function(column, res)
   {
     as.POSIXlt(paste(format(cov,"%Y"),"1-1",sep="-"))
     nTotal <- length(seq(from=cov[1],to=cov[2],by="1 year"))
-    nData <- nrow(groupFrequency(column,by=c("year"))) 
+    nData <- nrow(groupFrequency(column,by=c("year")))
   }
   else if(res == "monthly")
   {
@@ -298,19 +330,19 @@ tpDistribution <- function(column, res)
   {
     as.POSIXlt(paste(format(cov,"%Y-%m-%d %H"),"00:00",sep=":"))
     nTotal <- length(seq(from=cov[1],to=cov[2],by="1 hour"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour"))) 
+    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour")))
   }
   else if(res == "minutely")
   {
     as.POSIXlt(paste(format(cov,"%Y-%m-%d %H:%M"),"00",sep=":"))
     nTotal <- length(seq(from=cov[1],to=cov[2],by="1 min"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour","min"))) 
+    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour","min")))
   }
   else if(res == "secondly")
   {
     # as.POSIXlt(paste(format(cov,"%Y-%m-%d %H:%M"),"00",sep=":"))
     nTotal <- length(seq(from=cov[1],to=cov[2],by="1 sec"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour","min","sec"))) 
+    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour","min","sec")))
   }
   return(nData/nTotal)
 }
