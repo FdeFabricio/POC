@@ -1,12 +1,18 @@
 Ferramenta para Extração de Propriedades e Análise de Múltiplas Camadas de Sensoriamento
 ====
-## Property extraction
+
+* [Property Extraction](#property-extraction)
+ * [Spatial Coverage](#spatial-coverage)
+ * [Temporal Coverage](#temporal-coverage)
+* [Analysis](#analysis)
+
+# Property Extraction
 
 ### Spatial Coverage
 
 This property represents the area the data is inserted into. It receives the longitude and latitude columns and returns the extreme coordinates (maximum and minimum), forming a bounding box.
 
-##### Parameters
+#### Parameters
 - **lon:** longitude column
 - **lat:** latitude column
 - **plotBbox:** if TRUE, it plots the bounding box (default is FALSE)
@@ -27,12 +33,20 @@ ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 -74.06077 40.63317 -73.76324  40.84902
 ```
 2. `spCoverage(ig$lon, ig$lat, TRUE)` returns:
-
-![](https://github.com/FdeFabricio/POC/blob/master/img/spCoverage1.jpg)
-
+<div style="text-align:center">
+<a href="url"><img src="img/spCoverage1.jpg" height="400" align="center"></a>
+</div>
 3. `spCoverage(ig$lon, ig$lat, plotBbox=TRUE, plotData=TRUE)` returns:
+
+![](https://github.com/FdeFabricio/POC/blob/master/img/spCoverage2.jpg)
+
 4. `spCoverage(ig$lon, ig$lat, TRUE, "red", TRUE, "white")` returns:
 
-##### Analysis
+![](https://github.com/FdeFabricio/POC/blob/master/img/spCoverage3.jpg)
+
+### Temporal Coverage
+#### Parameters
+#### Examples
+
+### Analysis
 1. [STIA](https://github.com/FdeFabricio/POC/tree/master/tutorials/STIA)
-2. Correlation [in progress]
