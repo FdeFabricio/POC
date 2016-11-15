@@ -33,16 +33,13 @@ ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 -74.06077 40.63317 -73.76324  40.84902
 ```
 2. `spCoverage(ig$lon, ig$lat, TRUE)` returns:
-<div style="text-align:center">
-<a href="url"><img src="img/spCoverage1.jpg" height="400" align="center"></a>
-</div>
-3. `spCoverage(ig$lon, ig$lat, plotBbox=TRUE, plotData=TRUE)` returns:
+<div/><a href="img/spCoverage1.jpg"><img src="img/spCoverage1.jpg" height="400" align="center"></a>
 
-![](https://github.com/FdeFabricio/POC/blob/master/img/spCoverage2.jpg)
+3. `spCoverage(ig$lon, ig$lat, plotBbox=TRUE, plotData=TRUE)` returns:
+<a href="https://github.com/FdeFabricio/POC/blob/master/img/spCoverage2.jpg"><img src="img/spCoverage2.jpg" height="300"></a>
 
 4. `spCoverage(ig$lon, ig$lat, TRUE, "red", TRUE, "white")` returns:
-
-![](https://github.com/FdeFabricio/POC/blob/master/img/spCoverage3.jpg)
+<a href="/img/spCoverage3.jpg"><img src="/img/spCoverage3.jpg" height="200"></a>
 
 ### Temporal Coverage
 #### Parameters
