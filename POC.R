@@ -2,6 +2,10 @@ library(ggmap)
 library(rgeos)
 library(raster)
 
+getCenter <- function(bbox)
+{
+  c(lon=mean(bbox[c(1,3)]),lat=mean(bbox[c(2,4)]))
+}
 
 #' Get Extremes.
 #'
@@ -29,28 +33,40 @@ getExtremes <- function(v)
 #'
 #' @param lon Longitude column.
 #' @param lat Latitude column.
-#' @return The output is a vector with max and min coordinates, as a bounding
-#'   box.
-#'
-#'   If \code{plotBbox} is TRUE, it plots the bounding box with the colour
-#'   informed in \code{colourBbox}.
-#'
-#'   If \code{plotData} is TRUE, it plots also the data as points with the
-#'   colour informed in \code{colourData}.
-spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FALSE, colourData="yellow")
+#' @param plotBbox If TRUE it plots the bounding box
+#' @param colourBbox Colour of the bounding box
+#' @param plotData If TRUE it also plots the data as points
+#' @param colourBbox Colour of data points
+#' @param source Google Maps ("google"), OpenStreetMap ("osm") or Stamen Maps ("stamen")
+#' @param maptype Character string providing map theme, which depends on the source
+#' @param zoom Map zoom (leave it NULL for auto zoom)
+#' @return The output is a vector with max and min coordinates, as a bounding box.
+#' @author Fabricio Ferreira \email{fabriciocomf@@gmail.com}
+spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FALSE, colourData="yellow", source="google", maptype="terrain", zoom=NULL)
 {
-  coverage <- c(getExtremes(lon),getExtremes(lat))
-  coverage <- c(left=coverage[1], bottom=coverage[3], right=coverage[2], top=coverage[4])
+  bbox <- make_bbox(lon, lat, f=0)
   if (plotBbox == FALSE)
   {
-    return(coverage)
+    return(bbox)
   }
-  print(coverage)
+  print(bbox)
+  
+  if(source == "google")
+  {
+    if(is.null(zoom)) zoom <- calc_zoom(bbox)-1
+    myMap <- get_googlemap(center=getCenter(bbox), zoom=zoom, maptype=maptype)
+  }
+  
+  else {
+    if(is.null(zoom)) zoom <- calc_zoom(bbox)
+    bbox10p <- make_bbox(bbox[c(1,3)],bbox[c(2,4)],f=0.1) # original bbox 10% wider
+    
+    if(source == "stamen") myMap <- get_stamenmap(bbox10p, zoom=zoom, maptype=maptype, crop=TRUE)
+    else if(source == "osm") myMap <- get_map(bbox10p, zoom=zoom, source="osm")
+  }
 
-  myMap <-get_map(location=coverage, source="stamen", maptype="watercolor", crop=FALSE)
-
-  x <- c(coverage["left"], coverage["left"], coverage["right"], coverage["right"])
-  y <- c(coverage["bottom"], coverage["top"], coverage["top"], coverage["bottom"])
+  x <- bbox[c(1,1,3,3)]
+  y <- bbox[c(2,4,4,2)]
   df <- data.frame(x, y)
 
   # Plotting
@@ -60,7 +76,7 @@ spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FA
   {
     dataPlot <- geom_point(aes(x=lon, y=lat),  data=data.frame(lon,lat), size=.3, colour=colourData)
   }
-  ggmap(myMap)+areaPlot+dataPlot
+  ggmap(myMap,extent="device")+ggtitle("\nSpatial Coverage")+theme(plot.title=element_text(hjust = 0.5))+areaPlot+dataPlot
 
 }
 

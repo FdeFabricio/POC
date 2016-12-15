@@ -27,22 +27,22 @@ source("POC.R")
 ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 ```
 
-**1.** `spCoverage(ig$lon, ig$lat)` returns:
+**1. `spCoverage(ig$lon, ig$lat)` returns:**
 ```
 ‏     left   bottom     right       top
 -74.06077 40.63317 -73.76324  40.84902
 ```
-**2.** `spCoverage(ig$lon, ig$lat, TRUE)` returns:
+**2. `spCoverage(ig$lon, ig$lat, TRUE)` returns:**
 
-<a href="/img/spCoverage1.jpg"><img src="/img/spCoverage1.jpg" height="350"></a>
+<a href="/img/spCoverage1.png"><img src="/img/spCoverage1.png" height="350"></a>
 
-**3.** `spCoverage(ig$lon, ig$lat, plotBbox=TRUE, plotData=TRUE)` returns:
+**3. `spCoverage(ig$lon, ig$lat, plotBbox=TRUE, plotData=TRUE, source="stamen")` returns:**
 
-<a href="/img/spCoverage2.jpg"><img src="/img/spCoverage2.jpg" height="350"></a>
+<a href="/img/spCoverage2.png"><img src="/img/spCoverage2.png" height="350"></a>
 
-**4.** `spCoverage(ig$lon, ig$lat, TRUE, "red", TRUE, "white")` returns:
+**4. `spCoverage(ig$lon, ig$lat, TRUE, "red", TRUE, "green", source="stamen",maptype="toner-background")` returns:**
 
-<a href="/img/spCoverage3.jpg"><img src="/img/spCoverage3.jpg" height="350"></a>
+<a href="/img/spCoverage3.png"><img src="/img/spCoverage3.png" height="350"></a>
 
 <a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
 
@@ -68,12 +68,12 @@ ig$timestamp <- as.POSIXct(ig$timestamp, format="%Y-%m-%dT%H:%M:%SZ")
 [1] "2013-05-11 12:34:20 BRT" "2013-05-25 01:23:34 BRT"
 ```
 
-**2. tpCoverage(ig$timestamp, TRUE) returns:**
+**2.** `tpCoverage(ig$timestamp, TRUE)` returns:
 ```
 Time difference of 13.53419 days
 [1] "2013-05-11 12:34:20 BRT" "2013-05-25 01:23:34 BRT"
 ```
 <a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
 
-### Analysis
+# Analysis
 1. [STIA](https://github.com/FdeFabricio/POC/tree/master/tutorials/STIA)
