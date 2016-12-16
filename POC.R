@@ -7,6 +7,14 @@ getCenter <- function(bbox)
   c(lon=mean(bbox[c(1,3)]),lat=mean(bbox[c(2,4)]))
 }
 
+bboxToPolygon <- function(bbox)
+{
+  x <- bbox[c(1,1,3,3)]
+  y <- bbox[c(2,4,4,2)]
+  df <- data.frame(x, y)
+  return(df)
+}
+
 #' Get Extremes.
 #'
 #' \code(getExtremes) returns a vector with the maximum and the minimum element of the input vector.
@@ -25,7 +33,7 @@ getExtremes <- function(v)
 
 #' Spatial Coverage.
 #'
-#' \code(spCoverage) returns the spatial coverage of a given dataframe.
+#' \code(spCoverage) returns the spatial coverage of a given layer
 #'
 #' This property represents the area the data is inserted into. It receives the
 #' longitude and latitude columns and returns the extreme coordinates (maximum
@@ -40,7 +48,7 @@ getExtremes <- function(v)
 #' @param source Google Maps ("google"), OpenStreetMap ("osm") or Stamen Maps ("stamen")
 #' @param maptype Character string providing map theme, which depends on the source
 #' @param zoom Map zoom (leave it NULL for auto zoom)
-#' @return The output is a vector with max and min coordinates, as a bounding box.
+#' @return The output is a bounding box. This function can also plot the bounding box and data points on a base map.
 #' @author Fabricio Ferreira \email{fabriciocomf@@gmail.com}
 spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FALSE, colourData="yellow", source="google", maptype="terrain", zoom=NULL)
 {
@@ -64,59 +72,63 @@ spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FA
     if(source == "stamen") myMap <- get_stamenmap(bbox10p, zoom=zoom, maptype=maptype, crop=TRUE)
     else if(source == "osm") myMap <- get_map(bbox10p, zoom=zoom, source="osm")
   }
-
-  x <- bbox[c(1,1,3,3)]
-  y <- bbox[c(2,4,4,2)]
-  df <- data.frame(x, y)
-
+  
   # Plotting
   dataPlot <- geom_blank()
-  areaPlot <- geom_polygon(aes(x=x, y=y), data=df, colour=colourBbox, fill=colourBbox, alpha=.4, size=.3)
+  areaPlot <- geom_polygon(aes(x=x, y=y), data=bboxToPolygon(bbox), colour=colourBbox, fill=colourBbox, alpha=.4, size=.3)
   if (plotData == TRUE)
   {
     dataPlot <- geom_point(aes(x=lon, y=lat),  data=data.frame(lon,lat), size=.3, colour=colourData)
   }
   ggmap(myMap,extent="device")+ggtitle("\nSpatial Coverage")+theme(plot.title=element_text(hjust = 0.5))+areaPlot+dataPlot
-
 }
 
-#' Title
+
+#' Multiple Spatial Coverage
 #'
-#' @param list
+#' \code(spCoverageList) returns the spatial coverage of a list of layers
 #'
-#' @return
-#' @export
+#' @param list List with the layers
+#' @param source Google Maps ("google"), OpenStreetMap ("osm") or Stamen Maps ("stamen")
+#' @param maptype Character string providing map theme, which depends on the source
 #'
+#' @return A plot with each individual spatial coverage on a base map
+#'
+#' @author Fabricio Ferreira \email{fabriciocomf@@gmail.com}
 #' @examples
-spCoverageList <- function(list)
+#' list <- list(instagram=list,checkin=ci)
+#' spCoverageList(list, source="stamen")
+spCoverageList <- function(list, source="google", maptype="terrain")
 {
-  coord <- list(lon=c(),lat=c())
+  # stores all the bbox coordinates from all layers to plot a map with the extreme coordinates
+  coord <- list(lon=c(),lat=c())  
+ 
+  # stores all polygons (bboxes)
   polygon <- list()
-  names <- names(list)
+  
   for (i in 1:length(list))
   {
-    lon <- list[[i]][[1]]
-    lat <- list[[i]][[2]]
-    colour <- list[[i]][[3]]
+    df <- list[[i]]
+  
+    bbox <- spCoverage(df$lon, df$lat)
 
-    coverage <- spCoverage(lon, lat)
-
-    coord$lon[length(coord$lon)+1] <- coverage$lonR[1]
-    coord$lon[length(coord$lon)+1] <- coverage$lonR[2]
-    coord$lat[length(coord$lat)+1] <- coverage$latR[1]
-    coord$lat[length(coord$lat)+1] <- coverage$latR[2]
-
-    x <- c(coverage$lonR[1], coverage$lonR[1], coverage$lonR[2], coverage$lonR[2])
-    y <- c(coverage$latR[1], coverage$latR[2], coverage$latR[2], coverage$latR[1])
-    df.coverage = data.frame(x, y)
-    polygon[[names[i]]] <- geom_polygon(aes(x=x, y=y), data=data.frame(x, y), colour = colour, fill = colour, alpha = .4, size = .3)
-
+    coord$lon <- append(coord$lon, bbox[c(1,3)])
+    coord$lat <- append(coord$lat, bbox[c(2,4)])
+    
+    polygonDF <- bboxToPolygon(bbox)
+    polygonDF$name <- names(list)[i]
+    
+    polygon[[i]] <- geom_polygon(aes(x=x,y=y,fill=name,color=name), data=polygonDF, alpha=.5, size=.4)
   }
-  myLocation <- c(min(coord$lon), min(coord$lat), max(coord$lon), max(coord$lat))
-  myMap <-get_map(location=myLocation, source="stamen", maptype="watercolor", crop=FALSE)
+  
+  myLocationBbox <- make_bbox(coord$lon, coord$lat, f=0.1)
+  zoom <- calc_zoom(myLocationBbox)
+  
+  if(source == "google") myMap <- get_googlemap(center=getCenter(bbox), zoom=zoom-1, maptype=maptype)
+  else if(source == "stamen") myMap <- get_stamenmap(myLocationBbox, zoom=zoom, maptype=maptype, crop=TRUE)
+  else if(source == "osm") myMap <- get_map(myLocationBbox, zoom=zoom, source="osm")
 
-  ggmap(myMap)+polygon
-
+  ggmap(myMap,extent="device")+polygon+theme(legend.position="bottom",legend.title=element_blank(),plot.title=element_text(hjust = 0.2))
 }
 
 #' Temporal Coverage.

@@ -1,4 +1,4 @@
-<a name="top"></a>Ferramenta para Extração de Propriedades e Análise de Múltiplas Camadas de Sensoriamento
+<a name="top"></a>An R package for property extraction and analysis of multiple Sensing Layers
 ====
 
 * [Property Extraction](#property-extraction)
@@ -43,6 +43,17 @@ ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 **4. `spCoverage(ig$lon, ig$lat, TRUE, "red", TRUE, "green", source="stamen",maptype="toner-background")` returns:**
 
 <a href="/img/spCoverage3.png"><img src="/img/spCoverage3.png" height="350"></a>
+
+It is also possible to plot the spatial coverage of multiple layers using `spCoverageList()`. The input is a list with named dataframes. It is important that every df has a lon and lat columns.
+
+```
+source("POC.R")
+ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+ci <- read.table("data/checkin1.dat", header=TRUE, stringsAsFactors=FALSE)
+list <- list(instagram=ig,checkin=ci)
+spCoverageList(list, source="stamen")
+```
+<a href="/img/spCoverage4.png"><img src="/img/spCoverage4.png" height="350"></a>
 
 <a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
 
