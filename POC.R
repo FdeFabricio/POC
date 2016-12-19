@@ -2,35 +2,6 @@ library(ggmap)
 library(rgeos)
 library(raster)
 
-getCenter <- function(bbox)
-{
-  c(lon=mean(bbox[c(1,3)]),lat=mean(bbox[c(2,4)]))
-}
-
-bboxToPolygon <- function(bbox)
-{
-  x <- bbox[c(1,1,3,3)]
-  y <- bbox[c(2,4,4,2)]
-  df <- data.frame(x, y)
-  return(df)
-}
-
-#' Get Extremes.
-#'
-#' \code(getExtremes) returns a vector with the maximum and the minimum element of the input vector.
-#'
-#' @param v Input vector.
-#'
-#' @return A 2-element vector (min, max).
-#'
-#' @examples
-#' x <- (1,2,3,4,5)
-#' getExtremes(x)
-getExtremes <- function(v)
-{
-  return(c(min(v), max(v)))
-}
-
 #' Spatial Coverage.
 #'
 #' \code(spCoverage) returns the spatial coverage of a given layer
@@ -49,7 +20,6 @@ getExtremes <- function(v)
 #' @param maptype Character string providing map theme, which depends on the source
 #' @param zoom Map zoom (leave it NULL for auto zoom)
 #' @return The output is a bounding box. This function can also plot the bounding box and data points on a base map.
-#' @author Fabricio Ferreira \email{fabriciocomf@@gmail.com}
 spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FALSE, colourData="yellow", source="google", maptype="terrain", zoom=NULL)
 {
   bbox <- make_bbox(lon, lat, f=0)
@@ -62,7 +32,7 @@ spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FA
   if(source == "google")
   {
     if(is.null(zoom)) zoom <- calc_zoom(bbox)-1
-    myMap <- get_googlemap(center=getCenter(bbox), zoom=zoom, maptype=maptype)
+    myMap <- get_googlemap(center=getCentre(bbox), zoom=zoom, maptype=maptype)
   }
   
   else {
@@ -94,7 +64,6 @@ spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FA
 #'
 #' @return A plot with each individual spatial coverage on a base map
 #'
-#' @author Fabricio Ferreira \email{fabriciocomf@@gmail.com}
 #' @examples
 #' list <- list(instagram=list,checkin=ci)
 #' spCoverageList(list, source="stamen")
@@ -124,7 +93,7 @@ spCoverageList <- function(list, source="google", maptype="terrain")
   myLocationBbox <- make_bbox(coord$lon, coord$lat, f=0.1)
   zoom <- calc_zoom(myLocationBbox)
   
-  if(source == "google") myMap <- get_googlemap(center=getCenter(bbox), zoom=zoom-1, maptype=maptype)
+  if(source == "google") myMap <- get_googlemap(center=getCentre(bbox), zoom=zoom-1, maptype=maptype)
   else if(source == "stamen") myMap <- get_stamenmap(myLocationBbox, zoom=zoom, maptype=maptype, crop=TRUE)
   else if(source == "osm") myMap <- get_map(myLocationBbox, zoom=zoom, source="osm")
 
@@ -149,6 +118,136 @@ tpCoverage <- function(column, printDiff=FALSE)
   x <- getExtremes(column)
   if(printDiff) print(x[2]-x[1])
   return(x)
+}
+
+#' Spatial Distribution
+#' 
+#' \code{spDistribution} returns the percentage of the spatial coverage that has data
+#'
+#' @param lon Longitude column
+#' @param lat Latitude column 
+#' @param nx Number of horizontal rectangles the area will be divided into
+#' @param ny Number of vertical rectangles the area will be divided into
+#' @param plot TRUE to plot the rectangles with data
+#' @param col Colour of the plot
+#' @param source Google Maps ("google"), OpenStreetMap ("osm") or Stamen Maps ("stamen")
+#' @param maptype Character string providing map theme, which depends on the source
+#'
+#' @return percentage of area covered by data and plot (optional)
+#' @examples
+#' spDistribution(crime$lon,crime$lat,20,20,plot=TRUE,source="google")
+spDistribution <- function(lon, lat, nx, ny, plot=FALSE, col="red", source="google", maptype="terrain")
+{
+  lon <- na.omit(lon)
+  lat <- na.omit(lat)
+  
+  stopifnot(length(lon) == length(lat))
+
+  bbox <- make_bbox(lon,lat,f=0)
+  minX <- bbox[1] 
+  minY <- bbox[2]
+  maxX <- bbox[3]
+  maxY <- bbox[4]
+  
+  # Matrix with all the individual rectangles
+  m <- matrix(0,nrow=nx,ncol=ny)
+  
+  # The distance between rectangles (its size, basically)
+  xStep <- abs(maxX-minX)/nx
+  yStep <- abs(maxY-minY)/ny
+  
+  # For each point of the dataframe, convert cartesian coordinates (x,y) to matrix coordinates (a,b) and set m[a,b]
+  # m[a,b] = 1 means there is at least a point inside that rectangle
+  # m[a,b] = 0 means there is no point inside that rectangle
+  for (i in 1:length(lon))
+  {
+    if(is.na(lon[i])||is.na(lat[i])) next
+    
+    a <- floor(abs((lon[i]-minX)/xStep))+1
+    b <- floor(abs((lat[i]-minY)/yStep))+1
+    
+    if((a<=nx)&(b<=ny))
+    {
+      m[a,b] <- 1
+    }
+  }
+  
+  print(sum(m)/(nx*ny))
+  
+  if (plot == TRUE)
+  {
+    # raster plot
+    r <- raster(xmn=minX, ymn=minY, xmx=maxX, ymx=maxY, nrows=nx, ncols=ny)
+    r[] <- 0
+    xy <- SpatialPoints(cbind(lon,lat))
+    tab <- table(cellFromXY(r, xy))
+    r[as.numeric(names(tab))] <- 1
+    
+    breakpoints <- c(0,0.5,1)
+    colors <- c(adjustcolor("white",alpha.f=0),adjustcolor(col,alpha.f=0.7))
+    rasterPlot <- as.raster(r,breaks=breakpoints,col=colors)
+    
+    # basemap
+    zoom <- calc_zoom(bbox)
+    bbox10p <- make_bbox(lon,lat,f=0.1)
+    if(source == "google") myMap <- get_googlemap(center=getCentre(bbox), zoom=zoom-1, maptype=maptype)
+    else if(source == "stamen") myMap <- get_stamenmap(bbox10p, zoom=zoom, maptype=maptype, crop=TRUE)
+    else if(source == "osm") myMap <- get_map(bbox10p, zoom=zoom, source="osm")
+  
+    # generate plot
+    bboxPlot <- geom_polygon(aes(x=x, y=y), data=bboxToPolygon(bbox), colour = col, fill = NA)
+    ggmap(myMap,extent="device")+inset_raster(rasterPlot,xmin=bbox(r)[1,1],ymin=bbox(r)[2,1],xmax=bbox(r)[1,2],ymax=bbox(r)[2,2])+bboxPlot
+  }
+}
+
+#' Temporal Distribution
+#'
+#' \code{tpDistribution} returns the percentage of the complete interval (temporal coverage) that has data
+#' 
+#' @param column Column with timestamp data. 
+#' @param res Time resolution: "yearly", "montly", "daily", "hourly", "minutely", "secondly"
+#'
+#' @return A percentage of how much of the time coverage is covered by data
+tpDistribution <- function(column, res)
+{
+  cov <- tpCoverage(column)
+  if(res == "yearly")
+  {
+    as.POSIXlt(paste(format(cov,"%Y"),"1-1",sep="-"))
+    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 year"))
+    nData <- nrow(groupFrequency(column,by=c("year")))
+  }
+  else if(res == "monthly")
+  {
+    as.POSIXlt(paste(format(cov,"%Y-%m"),"1",sep="-"))
+    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 month"))
+    nData <- nrow(groupFrequency(column,by=c("year","mon")))
+  }
+  else if (res == "daily")
+  {
+    as.POSIXlt(format(cov,"%Y-%m-%d"))
+    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 day"))
+    nData <- nrow(groupFrequency(column,by=c("year","mon","mday")))
+  }
+  else if(res == "hourly")
+  {
+    as.POSIXlt(paste(format(cov,"%Y-%m-%d %H"),"00:00",sep=":"))
+    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 hour"))
+    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour")))
+  }
+  else if(res == "minutely")
+  {
+    as.POSIXlt(paste(format(cov,"%Y-%m-%d %H:%M"),"00",sep=":"))
+    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 min"))
+    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour","min")))
+  }
+  else if(res == "secondly")
+  {
+    # as.POSIXlt(paste(format(cov,"%Y-%m-%d %H:%M"),"00",sep=":"))
+    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 sec"))
+    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour","min","sec")))
+  }
+  return(nData/nTotal)
 }
 
 # STIA
@@ -277,103 +376,7 @@ groupFrequency <- function(timestamp,value=NULL,by,fun=sum)
   }
 }
 
-# nx - number of horizontal intervals the area is divided into
-spDistribution <- function(x, y, nx, ny, plot=F, col="red")
-{
-  stopifnot(length(x) == length(y))
 
-  minX <- min(x)
-  minY <- min(y)
-  maxX <- max(x)
-  maxY <- max(y)
-
-  m <- matrix(0,nrow=nx,ncol=ny)
-
-  xStep <- (maxX-minX)/nx
-  yStep <- (maxY-minY)/ny
-
-  for (i in 1:length(x))
-  {
-    a <- floor(abs((x[i]-minX)/xStep))+1
-    b <- floor(abs((y[i]-minY)/yStep))+1
-    if((a<=nx)&&(b<=ny))
-    {
-      m[a,b] <- 1
-    }
-  }
-  if (plot)
-  {
-    # raster plot
-    r <- raster(xmn=minX, ymn=minY, xmx=maxX, ymx=maxY, nrows=nx, ncols=ny)
-    r[] <- 0
-    xy <- SpatialPoints(cbind(x,y))
-    tab <- table(cellFromXY(r, xy))
-    r[as.numeric(names(tab))] <- 1
-
-    breakpoints <- c(0,0.5,1)
-    colors <- c(adjustcolor("white",alpha.f=0),adjustcolor(col,alpha.f=0.7))
-    rasterPlot <- as.raster(r,breaks=breakpoints,col=colors)
-
-    # basemap
-    map <- get_map(location=bbox(r), zoom=11)
-
-    # bbox plot
-    x <- c(bbox(r)[1],bbox(r)[1],bbox(r)[3],bbox(r)[3])
-    y <- c(bbox(r)[2],bbox(r)[4],bbox(r)[4],bbox(r)[2])
-    bboxPlot <- geom_polygon(aes(x=x, y=y), data=data.frame(x, y), colour = col, fill = NA)
-
-    # generate plot
-    ggmap(map)+inset_raster(rasterPlot,xmin=bbox(r)[1,1],ymin=bbox(r)[2,1],xmax=bbox(r)[1,2],ymax=bbox(r)[2,2])+bboxPlot
-  }
-  print(sum(m)/(nx*ny))
-}
-
-# Temporal Distribution
-# This function calculates the percentage of the complete interval (temporal coverage)
-# the data
-# @column : timestamp column POSIXct/lt
-# @res : resolution
-tpDistribution <- function(column, res)
-{
-  cov <- tpCoverage(column)
-  if(res == "yearly")
-  {
-    as.POSIXlt(paste(format(cov,"%Y"),"1-1",sep="-"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 year"))
-    nData <- nrow(groupFrequency(column,by=c("year")))
-  }
-  else if(res == "monthly")
-  {
-    as.POSIXlt(paste(format(cov,"%Y-%m"),"1",sep="-"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 month"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon")))
-  }
-  else if (res == "daily")
-  {
-    as.POSIXlt(format(cov,"%Y-%m-%d"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 day"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday")))
-  }
-  else if(res == "hourly")
-  {
-    as.POSIXlt(paste(format(cov,"%Y-%m-%d %H"),"00:00",sep=":"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 hour"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour")))
-  }
-  else if(res == "minutely")
-  {
-    as.POSIXlt(paste(format(cov,"%Y-%m-%d %H:%M"),"00",sep=":"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 min"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour","min")))
-  }
-  else if(res == "secondly")
-  {
-    # as.POSIXlt(paste(format(cov,"%Y-%m-%d %H:%M"),"00",sep=":"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 sec"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour","min","sec")))
-  }
-  return(nData/nTotal)
-}
 
 # getFormat <- function(string)
 # {
@@ -386,3 +389,47 @@ tpDistribution <- function(column, res)
 #   if (string == "wday") return ("%u")
 #   if (string == "yday") return ("%j")
 # }
+
+#' Get Centre
+#' 
+#' This function receives a bounding box and returns the coordinates of its centre
+#'
+#' @param bbox Bouding box
+#'
+#' @return vector with lon and lat of the centre
+getCentre <- function(bbox)
+{
+  c(lon=mean(bbox[c(1,3)]),lat=mean(bbox[c(2,4)]))
+}
+
+
+#' Bbox to polygon
+#' 
+#' This function receives a bounding box and returns a dataframe with the coordinates to make a polygon plot
+#'
+#' @param bbox Bouding box
+#'
+#' @return dataframe with 4 points
+bboxToPolygon <- function(bbox)
+{
+  x <- bbox[c(1,1,3,3)]
+  y <- bbox[c(2,4,4,2)]
+  df <- data.frame(x, y)
+  return(df)
+}
+
+#' Get Extremes
+#'
+#' \code(getExtremes) returns a vector with the maximum and the minimum element of the input vector.
+#'
+#' @param v Input vector.
+#'
+#' @return A 2-element vector (min, max).
+#'
+#' @examples
+#' x <- (1,2,3,4,5)
+#' getExtremes(x)
+getExtremes <- function(v)
+{
+  return(c(min(v,na.rm=TRUE), max(v,na.rm=TRUE)))
+}
