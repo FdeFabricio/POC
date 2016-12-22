@@ -1,6 +1,7 @@
 library(ggmap)
 library(rgeos)
 library(raster)
+library(plyr)
 
 #' Spatial Coverage.
 #'
@@ -52,7 +53,6 @@ spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FA
   }
   ggmap(myMap,extent="device")+ggtitle("\nSpatial Coverage")+theme(plot.title=element_text(hjust = 0.5))+areaPlot+dataPlot
 }
-
 
 #' Multiple Spatial Coverage
 #'
@@ -122,7 +122,7 @@ tpCoverage <- function(column, printDiff=FALSE)
 
 #' Spatial Distribution
 #' 
-#' \code{spDistribution} returns the percentage of the spatial coverage that has data
+#' \code{spDistribution} returns the percentage of the spatial coverage that has data in it
 #'
 #' @param lon Longitude column
 #' @param lat Latitude column 
@@ -202,53 +202,108 @@ spDistribution <- function(lon, lat, nx, ny, plot=FALSE, col="red", source="goog
 
 #' Temporal Distribution
 #'
-#' \code{tpDistribution} returns the percentage of the complete interval (temporal coverage) that has data
+#' \code{tpDistribution} returns the percentage of the complete interval (temporal coverage) that has data in it
 #' 
-#' @param column Column with timestamp data. 
-#' @param res Time resolution: "yearly", "montly", "daily", "hourly", "minutely", "secondly"
+#' @param column Column with timestamp data 
+#' @param res Time resolution: "yearly", "montly", "daily", "hourly", "minutely" or "secondly"
+#' @param verbose if TRUE it returns also the two dataframes with the data intervals
 #'
 #' @return A percentage of how much of the time coverage is covered by data
-tpDistribution <- function(column, res)
+tpDistribution <- function(column, res, verbose=FALSE)
 {
-  cov <- tpCoverage(column)
+  coverage <- tpCoverage(column)
+  # nTotal = intervals (according to the resolution) between the timestamp extremes
+  # nData = intervals that has data
   if(res == "yearly")
   {
-    as.POSIXlt(paste(format(cov,"%Y"),"1-1",sep="-"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 year"))
-    nData <- nrow(groupFrequency(column,by=c("year")))
+    coverage <- as.POSIXlt(paste(format(coverage,"%Y"),"1-1",sep="-"))
+    nTotal <- length(seq(from=coverage[1],to=coverage[2],by="1 year"))
+    nData <- groupFrequency(column,by=c("year"))
   }
   else if(res == "monthly")
   {
-    as.POSIXlt(paste(format(cov,"%Y-%m"),"1",sep="-"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 month"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon")))
+    coverage <- as.POSIXlt(paste(format(coverage,"%Y-%m"),"1",sep="-"))
+    nTotal <- seq(from=coverage[1],to=coverage[2],by="1 month")
+    nData <- groupFrequency(column,by=c("year","mon"))
   }
   else if (res == "daily")
   {
-    as.POSIXlt(format(cov,"%Y-%m-%d"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 day"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday")))
+    coverage <- as.POSIXlt(format(coverage,"%Y-%m-%d"))
+    nTotal <- seq(from=coverage[1],to=coverage[2],by="1 day")
+    nData <- groupFrequency(column,by=c("year","mon","mday"))
   }
   else if(res == "hourly")
   {
-    as.POSIXlt(paste(format(cov,"%Y-%m-%d %H"),"00:00",sep=":"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 hour"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour")))
+    coverage <- as.POSIXlt(paste(format(coverage,"%Y-%m-%d %H"),"00:00",sep=":"))
+    nTotal <- seq(from=coverage[1],to=coverage[2],by="1 hour")
+    nData <- groupFrequency(column,by=c("year","mon","mday","hour"))
   }
   else if(res == "minutely")
   {
-    as.POSIXlt(paste(format(cov,"%Y-%m-%d %H:%M"),"00",sep=":"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 min"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour","min")))
+    coverage <- as.POSIXlt(paste(format(coverage,"%Y-%m-%d %H:%M"),"00",sep=":"))
+    nTotal <- seq(from=coverage[1],to=coverage[2],by="1 min")
+    nData <- groupFrequency(column,by=c("year","mon","mday","hour","min"))
   }
   else if(res == "secondly")
   {
-    # as.POSIXlt(paste(format(cov,"%Y-%m-%d %H:%M"),"00",sep=":"))
-    nTotal <- length(seq(from=cov[1],to=cov[2],by="1 sec"))
-    nData <- nrow(groupFrequency(column,by=c("year","mon","mday","hour","min","sec")))
+    nTotal <- seq(from=coverage[1],to=coverage[2],by="1 sec")
+    nData <- groupFrequency(column,by=c("year","mon","mday","hour","min","sec"))
   }
-  return(nData/nTotal)
+  if(!verbose) return(tpDistribution=nrow(nData)/length(nTotal))
+  else return(list(tpDistribution=(nrow(nData)/length(nTotal)),totalIntervals=nTotal,dataIntervals=nData))
 }
+
+#' Refresh Rate
+#'
+#' \code{refreshRate} returns the arithmetic mean of the time difference between consecutive measurements, giving the mean refreshRate
+#' 
+#' @param timestamp Column with the timestamp data
+#' @param by Vector with the parameters to group the data by time frames ("year","mon","mday","hour",min","sec","wday","yday"). Default is NULL which doesn't group the data
+#' @param verbose TRUE to also return the dataframe of the extraction which can be used in a plot
+#'
+#' @return Arithmetic mean, standard deviation and coefficient of variation of the refresh rate
+refreshRate <- function(timestamp, by=NULL, verbose=FALSE)
+{
+  timestamp <- sort(timestamp)
+  
+  sec <- as.POSIXlt(timestamp)$sec
+  min <- as.POSIXlt(timestamp)$min
+  hour <- as.POSIXlt(timestamp)$hour
+  mday <- as.POSIXlt(timestamp)$mday
+  mon <- as.POSIXlt(timestamp)$mon
+  year <- as.POSIXlt(timestamp)$year
+  wday <- weekdays(timestamp)
+  yday <- as.POSIXlt(timestamp)$yday
+  
+  mon <- mon+1
+  year <- year+1900
+  yday <- yday+1
+  
+  df <- data.frame(timestamp,year,mon,mday,hour,min,sec,wday,yday)
+  df$diff <- c(diff(timestamp, units="secs"),NA)
+  df <- head(df,-1)
+  
+  if(is.null(by))
+  {
+    mean <- mean(df$diff)
+    sd <- sd(df$diff)
+    cv <- cv(df$diff)
+  }
+  else
+  {
+    # indexes to ignore when calculating the mean(diff)
+    index <- (as.numeric(rownames(unique(df[by])))-1)[-1]
+    df <- df[-index,]
+    mean <- ddply(df, by, summarize, mean=mean(diff))
+    sd <- ddply(df, by, summarize, sd=sd(diff))
+    cv <- ddply(df, by, summarize, cv=cv(diff))
+  }
+  if(!verbose) return(list(mean=mean,sd=sd,cv=cv))
+  else return(list(mean=mean,sd=sd,cv=cv,df=df))
+}
+
+
+
 
 # STIA
 STIA <- function(T=NULL,S=NULL)
