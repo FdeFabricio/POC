@@ -5,6 +5,8 @@
  * [Spatial Coverage](#spatial-coverage---spcoverage)
  * [Temporal Coverage](#temporal-coverage---tpcoverage)
  * [Spatial Distribution](#spatial-distribution---spdistribution)
+ * [Spatial Popularity](#spatial-popularity---sppopularity)
+ * [Refresh Rate](#refresh-rate---refreshrate)
 * [Analysis](#analysis)
 
 # Property Extraction
@@ -166,6 +168,30 @@ tpDistribution(ig$time, "secondly")
 If we check the temporal coverage we can see that this layer has data from 11-May-2015 to 25-May-2015, so it obvious that the temporal distribution considering yearly or monthly resolution will be 100%. Considering a daily resolution the temporal distribution is still 100% because this layer has data everyday (set verbose TRUE to check that). With the lowest resolution, considering seconds, we get around 4%.
 
 `tpDistribution(crime$time, "hourly")` returns 0.998971. It means that every hour there is at least one crime in Houston, considering this layer with Houston crimes from January 2010 to August 2010.
+
+<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+
+### Spatial Popularity - `spPopularity()`
+
+This property identifies areas that have high data density, hence popular areas. Layers may have high spatial distribution (they cover the majority of the space) but most of the data is clustered in a specific region. In such cases it might not be a good a idea to assume the behaviour percieved in the popular area corresponds to the entire spatial extension of that layer. The output is a density map.
+
+#### Parameters
+- **lon:** longitude column
+- **lat:** latitude column
+- **source:** source of the basemap. It can be Google Maps ("google"), which is the default, OpenStreetMap ("osm") or Stamen Maps ("stamen")
+- **maptype:** character string providing map theme, which depends on the source (default is "terrain")
+- **colHigh:** colour of the high density area (default is "red")
+- **colLow:** Colour of the low density area (default is "yellow")
+- **hideMap:** TRUE to only plot the popularity without the background map (default is FALSE)
+
+#### Example
+
+```
+source("POC.R")
+ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+spPopularity(ig$lon,ig$lat,"stamen","toner","red","green")
+```
+<a href="/img/spPopularity.png"><img src="/img/spPopularity.png" height="350"></a>
 
 <a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
 

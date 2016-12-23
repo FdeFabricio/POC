@@ -11,8 +11,8 @@ library(plyr)
 #' longitude and latitude columns and returns the extreme coordinates (maximum
 #' and minimum), forming a bounding box.
 #'
-#' @param lon Longitude column.
-#' @param lat Latitude column.
+#' @param lon Longitude column
+#' @param lat Latitude column
 #' @param plotBbox If TRUE it plots the bounding box
 #' @param colourBbox Colour of the bounding box
 #' @param plotData If TRUE it also plots the data as points
@@ -29,22 +29,9 @@ spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FA
     return(bbox)
   }
   print(bbox)
-  
-  if(source == "google")
-  {
-    if(is.null(zoom)) zoom <- calc_zoom(bbox)-1
-    myMap <- get_googlemap(center=getCentre(bbox), zoom=zoom, maptype=maptype)
-  }
-  
-  else {
-    if(is.null(zoom)) zoom <- calc_zoom(bbox)
-    bbox10p <- make_bbox(bbox[c(1,3)],bbox[c(2,4)],f=0.1) # original bbox 10% wider
-    
-    if(source == "stamen") myMap <- get_stamenmap(bbox10p, zoom=zoom, maptype=maptype, crop=TRUE)
-    else if(source == "osm") myMap <- get_map(bbox10p, zoom=zoom, source="osm")
-  }
-  
+
   # Plotting
+  myMap <- getBaseMap(source, maptype, bbox, zoom)
   dataPlot <- geom_blank()
   areaPlot <- geom_polygon(aes(x=x, y=y), data=bboxToPolygon(bbox), colour=colourBbox, fill=colourBbox, alpha=.4, size=.3)
   if (plotData == TRUE)
@@ -188,11 +175,7 @@ spDistribution <- function(lon, lat, nx, ny, plot=FALSE, col="red", source="goog
     rasterPlot <- as.raster(r,breaks=breakpoints,col=colors)
     
     # basemap
-    zoom <- calc_zoom(bbox)
-    bbox10p <- make_bbox(lon,lat,f=0.1)
-    if(source == "google") myMap <- get_googlemap(center=getCentre(bbox), zoom=zoom-1, maptype=maptype)
-    else if(source == "stamen") myMap <- get_stamenmap(bbox10p, zoom=zoom, maptype=maptype, crop=TRUE)
-    else if(source == "osm") myMap <- get_map(bbox10p, zoom=zoom, source="osm")
+    myMap <- getBaseMap(source, maptype, bbox)
   
     # generate plot
     bboxPlot <- geom_polygon(aes(x=x, y=y), data=bboxToPolygon(bbox), colour = col, fill = NA)
@@ -302,7 +285,36 @@ refreshRate <- function(timestamp, by=NULL, verbose=FALSE)
   else return(list(mean=mean,sd=sd,cv=cv,df=df))
 }
 
-
+#' Spatial Popularity
+#' 
+#' \code{spPopularity} returns a map highlighting areas with high data density
+#'
+#' @param lon Longitude column
+#' @param lat Latitude column
+#' @param source Google Maps ("google"), OpenStreetMap ("osm") or Stamen Maps ("stamen")
+#' @param maptype Character string providing map theme, which depends on the source
+#' @param colHigh Colour of the high density area
+#' @param colLow Colour of the low density area
+#' @param hideMap TRUE to only plot the popularity without the background map
+#'
+#' @return Map with the density of points, pointing out popular areas
+spPopularity <- function(lon, lat, source="google", maptype="terrain", colHigh="red",colLow="yellow",hideMap=FALSE)
+{
+  df <- data.frame(lon,lat)
+  bbox <- make_bbox(lon, lat, f=0)
+  
+  if(hideMap) basePlot <- ggplot()
+  else basePlot <- ggmap(getBaseMap(source,maptype,bbox))
+  
+  basePlot+
+    stat_density2d(aes(lon,lat,fill=..level..,alpha=..level..), data=df, geom="polygon", alpha = 0.4)+
+    scale_fill_gradient(high=colHigh,low=colLow)+
+    scale_alpha(range=c(0, 0.3), guide=FALSE)+
+    geom_density2d(aes(lon,lat),data=df,size=0.2,alpha=0.3)+
+    labs(x="Longitude", y="Latitude")+
+    ggtitle("Spatial Popularity")+
+    theme(plot.title=element_text(hjust = 0.5))
+}
 
 
 # STIA
@@ -444,6 +456,16 @@ groupFrequency <- function(timestamp,value=NULL,by,fun=sum)
 #   if (string == "wday") return ("%u")
 #   if (string == "yday") return ("%j")
 # }
+
+getBaseMap <- function(source, maptype, bbox, zoom=NULL)
+{
+  if(is.null(zoom)) zoom <- calc_zoom(bbox)
+  bbox10p <- make_bbox(bbox[c(1,3)],bbox[c(2,4)],f=0.1)
+  if(source == "google") myMap <- get_googlemap(center=getCentre(bbox), zoom=zoom-1, maptype=maptype)
+  else if(source == "stamen") myMap <- get_stamenmap(bbox10p, zoom=zoom, maptype=maptype, crop=TRUE)
+  else if(source == "osm") myMap <- get_map(bbox10p, zoom=zoom, source="osm")
+  return(myMap)
+}
 
 #' Get Centre
 #' 
