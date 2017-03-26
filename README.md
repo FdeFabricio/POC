@@ -1,15 +1,43 @@
-<a name="top"></a>An R package for property extraction and analysis of multiple Sensing Layers
+<a name="top"></a>slkit
 ====
+**An R package for property extraction and analysis of multiple Sensing Layers.**
 
+The popularisation of smartphones and the increased use of mobile applications allow users to become not only consumers but also data producers. Data shared voluntarily by users using their mobile devices can be related to several aspects, including urban ones. Each type of urban data source, including the ones shared by users, can are considered a type of sensing layer. Data shared by users in a participatory fashion through mobile applications opens unprecedented opportunities to generate useful knowledge, identify and solve issues, and provide new services related to urban aspects. Due to the complexity of urban phenomena and the large volume of data that is typically available, stages such as modelling, pre-processing and analysis of sensing layers are essential efforts on urban computing research. However, those tasks can be time-consuming. To help to tackle that issue,  this study presents an R package intended to give support to researchers regarding decision making and evaluation of sensing layers. It provides functions for property extraction and multilayered analysis which can be customised according to one's project needs, helping to leverage new applications that explore the concept of sensing layers.
+
+* [Installation](#instalation)
 * [Property Extraction](#property-extraction)
- * [Spatial Coverage](#spatial-coverage---spcoverage)
- * [Temporal Coverage](#temporal-coverage---tpcoverage)
- * [Spatial Distribution](#spatial-distribution---spdistribution)
- * [Spatial Popularity](#spatial-popularity---sppopularity)
- * [Refresh Rate](#refresh-rate---refreshrate)
+  * **Spatial Properties**
+    * [Spatial Coverage](#spatial-coverage---spcoverage)
+    * [Spatial Distribution](#spatial-distribution---spdistribution)
+    * [Spatial Popularity](#spatial-popularity---sppopularity)
+  * **Temporal Properties**
+    * [Temporal Coverage](#temporal-coverage---tpcoverage)
+    * [Temporal Distribution](#temporal-distribution---tpdistribution)
+    * [Temporal Popularity](#temporal-popularity---tppopularity)
+    * [Refresh Rate](#refresh-rate---refreshrate)
 * [Analysis](#analysis)
+  * [STIA](#stia)
+
+# Installation
+
+This package was developed in a way one could edit according to their needs. Therefore it was not registered as an official CRAN package, but a single file one can download and edit it. To import it in your project, download the ``POC.R`` file, insert it into your project folder and import through the ``source`` command. For an example of use, see [STIA Tutorial](https://github.com/FdeFabricio/POC/tree/master/tutorials/STIA).
+
+```
+source("POC.R")
+```
+
+<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
 
 # Property Extraction
+
+A property is any spatial or temporal characteristic of a Sensing Layer that can be measured and compared among different layers. This package presents a set of properties, divided into temporal and spatial, and functions to extract them. The list of properties is not fixed and can be expanded when necessary, according to one's study particularities.
+
+<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+
+
+## Spatial Properties
+
+These properties quantify the relationship with the geographic space.
 
 ### Spatial Coverage - `spCoverage()`
 
@@ -63,38 +91,9 @@ spCoverageList(list, source="stamen")
 
 <a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
 
-### Temporal Coverage - `tpCoverage()`
-
-This property represents the temporal interval the data is inserted into. The function `spCoverage()` extracts the range from a timestamp (POSIX*) column and returns a vector with the earliest and latest data. It can also return the extent of the interval, if `printDiff` is set as TRUE.
-
-#### Parameters
-- **column:** timestamp column
-- **printDiff:** if TRUE, it prints the time difference (default is FALSE)
-
-#### Example
-Before anything we should source the file and any dataset. We also need to convert the timestamp column to a POSIXct or POSIXlt format, since originally its class is character.
-
-```
-source("POC.R")
-ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
-ig$timestamp <- as.POSIXct(ig$timestamp, format="%Y-%m-%dT%H:%M:%SZ")
-```
-**1.** `tpCoverage(ig$timestamp)` returns:
-
-```
-[1] "2013-05-11 12:34:20 BRT" "2013-05-25 01:23:34 BRT"
-```
-
-**2.** `tpCoverage(ig$timestamp, TRUE)` returns:
-```
-Time difference of 13.53419 days
-[1] "2013-05-11 12:34:20 BRT" "2013-05-25 01:23:34 BRT"
-```
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
-
 ### Spatial Distribution - `spDistribution()`
 
-This property returns the percentage of the spatial coverage that has data associated with. It first divides the space into rectangles and creates a matrix to represent it. Then it process all the data points, checking in which rectangle each point is inserted into. It then returns the percentage of rectangles with data. It can also return a plot with the data rectangles coloured.
+This property returns the percentage of the spatial coverage that has data associated with. It first divides the space into rectangles and creates a matrix to represent it. Then it processes all the data points, checking in which rectangle each point is inserted into. It then returns the percentage of rectangles with data. It can also return a plot with the data rectangles coloured.
 
 The figure below illustrates how the spatial coverage is divided into rectangles.
 
@@ -134,6 +133,63 @@ We can also see that the more we increase the resolution, i.e., the number of ho
 
 <a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
 
+### Spatial Popularity - `spPopularity()`
+
+This property identifies areas that have high data density, hence popular areas. Layers may have high spatial distribution (they cover the majority of the space) but most of the data is clustered in a specific region. In such cases, it might not be a good idea to assume the behaviour perceived in the popular area corresponds to the entire spatial extension of that layer. The output is a density map.
+
+#### Parameters
+- **lon:** longitude column
+- **lat:** latitude column
+- **source:** source of the basemap. It can be Google Maps ("google"), which is the default, OpenStreetMap ("osm") or Stamen Maps ("stamen")
+- **maptype:** character string providing map theme, which depends on the source (default is "terrain")
+- **colHigh:** colour of the high density area (default is "red")
+- **colLow:** Colour of the low density area (default is "yellow")
+- **hideMap:** TRUE to only plot the popularity without the background map (default is FALSE)
+
+#### Example
+
+```
+source("POC.R")
+ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+spPopularity(ig$lon,ig$lat,"stamen","toner","red","green")
+```
+<a href="/img/spPopularity.png"><img src="/img/spPopularity.png" height="350"></a>
+
+<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+
+## Temporal Properties
+
+This set of properties is a mechanism to characterise how data behave considering time as a factor.
+
+### Temporal Coverage - `tpCoverage()`
+
+This property represents the temporal interval the data is inserted into. The function `spCoverage()` extracts the range from a timestamp (POSIX*) column and returns a vector with the earliest and latest data. It can also return the extent of the interval if `printDiff` is set as TRUE.
+
+#### Parameters
+- **column:** timestamp column
+- **printDiff:** if TRUE, it prints the time difference (default is FALSE)
+
+#### Example
+Before anything, we should source the file and any dataset. We also need to convert the timestamp column to a POSIXct or POSIXlt format, since originally its class is character.
+
+```
+source("POC.R")
+ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+ig$timestamp <- as.POSIXct(ig$timestamp, format="%Y-%m-%dT%H:%M:%SZ")
+```
+**1.** `tpCoverage(ig$timestamp)` returns:
+
+```
+[1] "2013-05-11 12:34:20 BRT" "2013-05-25 01:23:34 BRT"
+```
+
+**2.** `tpCoverage(ig$timestamp, TRUE)` returns:
+```
+Time difference of 13.53419 days
+[1] "2013-05-11 12:34:20 BRT" "2013-05-25 01:23:34 BRT"
+```
+<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+
 ### Temporal Distribution - `tpDistribution()`
 
 This property returns the percentage of the temporal coverage that has data associated with. It first divides the time into intervals, according to a time resolution, and aggregate the original data in each interval. It then returns the percentage of intervals with data. It can also return the dataframes with the total intervals inside the temporal coverage and the intervals in which there are data.
@@ -171,27 +227,57 @@ If we check the temporal coverage we can see that this layer has data from 11-Ma
 
 <a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
 
-### Spatial Popularity - `spPopularity()`
+### Temporal Popularity - `tpPopularity()`
 
-This property identifies areas that have high data density, hence popular areas. Layers may have high spatial distribution (they cover the majority of the space) but most of the data is clustered in a specific region. In such cases it might not be a good a idea to assume the behaviour percieved in the popular area corresponds to the entire spatial extension of that layer. The output is a density map.
+This property identifies periods that have high data density, hence popular times. Layers may have more data during a certain period of the day (more check-ins during the evenings), the week (more traffic incidents on weekdays), and so on. Therefore a temporal popularity property can highlight periods of time that have higher data density than others. The method output is a dataframe with the grouped period and the number of data of such period.
+
+Let's say we have two datasets: one about rubbish level on streets and the other about check-ins. The idea is to try to understand if a great concentration of people can increase the level of street litter (are busy areas dirtier?). The first dataset is a collaborative sensing platform, where users post where they found rubbish on the streets. This layer, in particular, has way more data during the day, since at night when it's dark, it's difficult to spot litter. On the other hand, the second dataset has more data during the night, since people like to check-in when they are going out. In this case, spotting such disparity regarding the temporal popularity the correlation would not be accurate. As alternative one could correlate both layers splitting the day into periods (day and night, for instance) and make a correlation of each period separately.
 
 #### Parameters
-- **lon:** longitude column
-- **lat:** latitude column
-- **source:** source of the basemap. It can be Google Maps ("google"), which is the default, OpenStreetMap ("osm") or Stamen Maps ("stamen")
-- **maptype:** character string providing map theme, which depends on the source (default is "terrain")
-- **colHigh:** colour of the high density area (default is "red")
-- **colLow:** Colour of the low density area (default is "yellow")
-- **hideMap:** TRUE to only plot the popularity without the background map (default is FALSE)
+- **timestamp:** timestamp column
+- **by:** a vector with the parameters to group the data by time frames ("year","mon","mday","hour",min","sec","wday","yday")
 
 #### Example
 
 ```
 source("POC.R")
 ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
-spPopularity(ig$lon,ig$lat,"stamen","toner","red","green")
+ig$timestamp <- as.POSIXct(ig$timestamp, format="%Y-%m-%dT%H:%M:%SZ")
 ```
-<a href="/img/spPopularity.png"><img src="/img/spPopularity.png" height="350"></a>
+
+Now we can use the output of the method to plot the result. The figure below shows that there is no much daily variation of Instagram posts. The first and last day have both fewer data than the other periods. We can associate that to the collection stage which may have started after the beginning of the 11th and before the end of the 25th.
+
+```
+tpPop <- tpPopularity(ig$timestamp, by=c("year","mon","mday"))
+ggplot(data=tpPop, aes(timestamp,count))+geom_bar(stat="identity")
+```
+
+<a href="/img/tpPopularity1.png"><img src="/img/tpPopularity1.png" height="350"></a>
+
+We can also see the popularity regarding the day of the week (although this dataset only has 13 complete days of data).
+
+```
+tpPop <- tpPopularity(ig$timestamp, by=c("year","mon","wday"))
+ggplot(data=tpPop,aes(timestamp,count))+geom_bar(stat="identity")+scale_x_datetime(labels = date_format("%A\n%b %Y"))
+```
+
+<a href="/img/tpPopularity2.png"><img src="/img/tpPopularity2.png" height="350"></a>
+
+With crimes dataset...
+
+```
+tpPop <- tpPopularity(crime$time, by=c("year","mon","wday"))
+ggplot(data=tpPop, aes(wday,count,fill=format(timestamp,"%b")))+geom_bar(stat="identity",position = "dodge")+scale_fill_discrete(name="Month 2010")+xlab("Weekday")
+```
+
+<a href="/img/tpPopularity3.png"><img src="/img/tpPopularity3.png" height="350"></a>
+
+```
+ggplot(data=tpPop, aes(format(timestamp,"%b"),count,fill=wday))+geom_bar(stat="identity",position = "dodge")+scale_fill_discrete(name="Weekday")+xlab("Month")
+```
+
+
+<a href="/img/tpPopularity4.png"><img src="/img/tpPopularity4.png" height="350"></a>
 
 <a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
 
@@ -199,7 +285,7 @@ spPopularity(ig$lon,ig$lat,"stamen","toner","red","green")
 
 This property represents how distant the data are in time. It calculates the arithmetic mean of the time difference between consecutive measurements. Besides the mean, the standard deviation and coefficient of variation are also returned. The output is provided in seconds, therefore unit conversion may be needed.
 
-The refresh rate can be extracted generally or by grouping data, since the it can vary through the hours of the day, days of week, and so on. This extraction also provides a verbose output which provides a dataframe that can be used to plot the refresh rate through time.
+The refresh rate can be extracted generally or by grouping data since it can vary by the hours of the day, days of the week, and so on. This extraction also provides a verbose output which provides a dataframe that can be used to plot the refresh rate through time.
 
 #### Parameters
 - **timestamp:** timestamp column
@@ -222,7 +308,7 @@ refreshRate(ig$timestamp)
 # [1] 451.7045
 ```
 
-This first example shows that our Instagram layer in particular has an avarege of a new post every 23 seconds. But it also shows the deviation is really high, 452% of the mean, which makes us think that there is a discrepancy someday. Let's find out by grouping the data daily.
+This first example shows that our Instagram layer, in particular, has an average of a new post every 23 seconds. But it also shows the deviation is really high, 452% of the mean, which makes us think that there is a discrepancy someday. Let's find out by grouping the data daily.
 
 ```
 refreshRate(ig$timestamp,by=c("year","mon","mday"))
@@ -298,4 +384,11 @@ Although it seems that this lack of data is not compromising the entire layer, w
 <a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
 
 # Analysis
-1. [STIA](https://github.com/FdeFabricio/POC/tree/master/tutorials/STIA)
+
+After analysing each dataset individually it is important to see how the selected layers relate to each other. A multilayered analysis intends to attest if the variable represented by one layer have any effect on another layer.
+
+### STIA
+
+SpatioTemporal Intersection Analysis (STIA) aims to measure the level of intersection between different layers regarding spatial and temporal data. The function receives the different layers as parameters and returns an intersection matrix with the percentage of intersection between each layer. This analysis is fundamental previously a multilayered correlation since one must make sure that there is no incongruity between layers (e.g., data of different periods of time or of different cities). [See STIA tutorial for more information.](https://github.com/FdeFabricio/POC/tree/master/tutorials/STIA)
+
+<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>

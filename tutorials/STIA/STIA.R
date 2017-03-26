@@ -2,13 +2,13 @@
 source("../../POC.R")
 
 # load the data frames
-ig <- read.table("../src/instagram.dat", header=FALSE, stringsAsFactors=FALSE)
+ig <- read.table("../../data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 ci <- read.table("../src/checkin.dat", header=FALSE, stringsAsFactors=FALSE)
 wu <- read.csv("../src/weatherunderground.csv", header=TRUE, stringsAsFactors=FALSE)
 nt <- read.csv("../src/noisetube.csv", header=TRUE, stringsAsFactors=FALSE)
 
 # convert the datetime column into the correct class
-ig$V2 <- as.POSIXct(ig$V2, format="%Y-%m-%dT%H:%M:%SZ")
+ig$timestamp <- as.POSIXct(ig$timestamp, format="%Y-%m-%dT%H:%M:%SZ")
 ci$V2 <- as.POSIXct(ci$V2, format="%Y-%m-%dT%H:%M:%SZ")
 wu$EST <- as.POSIXct(wu$EST, format="%Y-%m-%d", "UTC")
 nt$made_at <- as.POSIXct(nt$made_at, format="%Y-%m-%dT%H:%M:%SZ")

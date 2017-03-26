@@ -2,6 +2,7 @@ library(ggmap)
 library(rgeos)
 library(raster)
 library(plyr)
+library(scales)
 
 #' Spatial Coverage.
 #'
@@ -57,29 +58,29 @@ spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FA
 spCoverageList <- function(list, source="google", maptype="terrain")
 {
   # stores all the bbox coordinates from all layers to plot a map with the extreme coordinates
-  coord <- list(lon=c(),lat=c())  
- 
+  coord <- list(lon=c(),lat=c())
+
   # stores all polygons (bboxes)
   polygon <- list()
-  
+
   for (i in 1:length(list))
   {
     df <- list[[i]]
-  
+
     bbox <- spCoverage(df$lon, df$lat)
 
     coord$lon <- append(coord$lon, bbox[c(1,3)])
     coord$lat <- append(coord$lat, bbox[c(2,4)])
-    
+
     polygonDF <- bboxToPolygon(bbox)
     polygonDF$name <- names(list)[i]
-    
+
     polygon[[i]] <- geom_polygon(aes(x=x,y=y,fill=name,color=name), data=polygonDF, alpha=.5, size=.4)
   }
-  
+
   myLocationBbox <- make_bbox(coord$lon, coord$lat, f=0.1)
   zoom <- calc_zoom(myLocationBbox)
-  
+
   if(source == "google") myMap <- get_googlemap(center=getCentre(bbox), zoom=zoom-1, maptype=maptype)
   else if(source == "stamen") myMap <- get_stamenmap(myLocationBbox, zoom=zoom, maptype=maptype, crop=TRUE)
   else if(source == "osm") myMap <- get_map(myLocationBbox, zoom=zoom, source="osm")
@@ -90,7 +91,7 @@ spCoverageList <- function(list, source="google", maptype="terrain")
 #' Temporal Coverage.
 #'
 #' \code(tpCoverage) returns the temporal coverage of a given dataframe.
-#' 
+#'
 #' @param column Column with timestamp data.
 #' @param printDiff If TRUE prints also the date range difference.
 #'
@@ -108,11 +109,11 @@ tpCoverage <- function(column, printDiff=FALSE)
 }
 
 #' Spatial Distribution
-#' 
+#'
 #' \code{spDistribution} returns the percentage of the spatial coverage that has data in it
 #'
 #' @param lon Longitude column
-#' @param lat Latitude column 
+#' @param lat Latitude column
 #' @param nx Number of horizontal rectangles the area will be divided into
 #' @param ny Number of vertical rectangles the area will be divided into
 #' @param plot TRUE to plot the rectangles with data
@@ -127,40 +128,40 @@ spDistribution <- function(lon, lat, nx, ny, plot=FALSE, col="red", source="goog
 {
   lon <- na.omit(lon)
   lat <- na.omit(lat)
-  
+
   stopifnot(length(lon) == length(lat))
 
   bbox <- make_bbox(lon,lat,f=0)
-  minX <- bbox[1] 
+  minX <- bbox[1]
   minY <- bbox[2]
   maxX <- bbox[3]
   maxY <- bbox[4]
-  
+
   # Matrix with all the individual rectangles
   m <- matrix(0,nrow=nx,ncol=ny)
-  
+
   # The distance between rectangles (its size, basically)
   xStep <- abs(maxX-minX)/nx
   yStep <- abs(maxY-minY)/ny
-  
+
   # For each point of the dataframe, convert cartesian coordinates (x,y) to matrix coordinates (a,b) and set m[a,b]
   # m[a,b] = 1 means there is at least a point inside that rectangle
   # m[a,b] = 0 means there is no point inside that rectangle
   for (i in 1:length(lon))
   {
     if(is.na(lon[i])||is.na(lat[i])) next
-    
+
     a <- floor(abs((lon[i]-minX)/xStep))+1
     b <- floor(abs((lat[i]-minY)/yStep))+1
-    
+
     if((a<=nx)&(b<=ny))
     {
       m[a,b] <- 1
     }
   }
-  
+
   print(sum(m)/(nx*ny))
-  
+
   if (plot == TRUE)
   {
     # raster plot
@@ -169,14 +170,14 @@ spDistribution <- function(lon, lat, nx, ny, plot=FALSE, col="red", source="goog
     xy <- SpatialPoints(cbind(lon,lat))
     tab <- table(cellFromXY(r, xy))
     r[as.numeric(names(tab))] <- 1
-    
+
     breakpoints <- c(0,0.5,1)
     colors <- c(adjustcolor("white",alpha.f=0),adjustcolor(col,alpha.f=0.7))
     rasterPlot <- as.raster(r,breaks=breakpoints,col=colors)
-    
+
     # basemap
     myMap <- getBaseMap(source, maptype, bbox)
-  
+
     # generate plot
     bboxPlot <- geom_polygon(aes(x=x, y=y), data=bboxToPolygon(bbox), colour = col, fill = NA)
     ggmap(myMap,extent="device")+inset_raster(rasterPlot,xmin=bbox(r)[1,1],ymin=bbox(r)[2,1],xmax=bbox(r)[1,2],ymax=bbox(r)[2,2])+bboxPlot
@@ -186,8 +187,8 @@ spDistribution <- function(lon, lat, nx, ny, plot=FALSE, col="red", source="goog
 #' Temporal Distribution
 #'
 #' \code{tpDistribution} returns the percentage of the complete interval (temporal coverage) that has data in it
-#' 
-#' @param column Column with timestamp data 
+#'
+#' @param column Column with timestamp data
 #' @param res Time resolution: "yearly", "montly", "daily", "hourly", "minutely" or "secondly"
 #' @param verbose if TRUE it returns also the two dataframes with the data intervals
 #'
@@ -239,7 +240,7 @@ tpDistribution <- function(column, res, verbose=FALSE)
 #' Refresh Rate
 #'
 #' \code{refreshRate} returns the arithmetic mean of the time difference between consecutive measurements, giving the mean refreshRate
-#' 
+#'
 #' @param timestamp Column with the timestamp data
 #' @param by Vector with the parameters to group the data by time frames ("year","mon","mday","hour",min","sec","wday","yday"). Default is NULL which doesn't group the data
 #' @param verbose TRUE to also return the dataframe of the extraction which can be used in a plot
@@ -248,7 +249,7 @@ tpDistribution <- function(column, res, verbose=FALSE)
 refreshRate <- function(timestamp, by=NULL, verbose=FALSE)
 {
   timestamp <- sort(timestamp)
-  
+
   sec <- as.POSIXlt(timestamp)$sec
   min <- as.POSIXlt(timestamp)$min
   hour <- as.POSIXlt(timestamp)$hour
@@ -257,15 +258,15 @@ refreshRate <- function(timestamp, by=NULL, verbose=FALSE)
   year <- as.POSIXlt(timestamp)$year
   wday <- weekdays(timestamp)
   yday <- as.POSIXlt(timestamp)$yday
-  
+
   mon <- mon+1
   year <- year+1900
   yday <- yday+1
-  
+
   df <- data.frame(timestamp,year,mon,mday,hour,min,sec,wday,yday)
   df$diff <- c(diff(timestamp, units="secs"),NA)
   df <- head(df,-1)
-  
+
   if(is.null(by))
   {
     mean <- mean(df$diff)
@@ -286,7 +287,7 @@ refreshRate <- function(timestamp, by=NULL, verbose=FALSE)
 }
 
 #' Spatial Popularity
-#' 
+#'
 #' \code{spPopularity} returns a map highlighting areas with high data density
 #'
 #' @param lon Longitude column
@@ -302,10 +303,10 @@ spPopularity <- function(lon, lat, source="google", maptype="terrain", colHigh="
 {
   df <- data.frame(lon,lat)
   bbox <- make_bbox(lon, lat, f=0)
-  
+
   if(hideMap) basePlot <- ggplot()
   else basePlot <- ggmap(getBaseMap(source,maptype,bbox))
-  
+
   basePlot+
     stat_density2d(aes(lon,lat,fill=..level..,alpha=..level..), data=df, geom="polygon", alpha = 0.4)+
     scale_fill_gradient(high=colHigh,low=colLow)+
@@ -316,6 +317,57 @@ spPopularity <- function(lon, lat, source="google", maptype="terrain", colHigh="
     theme(plot.title=element_text(hjust = 0.5))
 }
 
+#' Temporal Popularity
+#'
+#' \code{tpPopularity} returns a dataframe that asserts which periods of time are more popular than others
+#'
+#' @param timestamp Column with the timestamp data
+#' @param by Vector with the parameters to group the data by time frames ("year","mon","mday","hour",min","sec","wday","yday")
+#'
+#' @return Dataframe with each grouped period of time and the number of data is included in it (count)
+tpPopularity <- function(timestamp,by)
+{
+  if (is.element("sec",by)) sec <- as.POSIXlt(timestamp)$sec
+  else sec <- NULL
+
+  if (is.element("min",by)) min <- as.POSIXlt(timestamp)$min
+  else min <- NULL
+
+  if (is.element("hour",by)) hour <- as.POSIXlt(timestamp)$hour
+  else hour <- NULL
+
+  if (is.element("mday",by)) mday <- as.POSIXlt(timestamp)$mday
+  else mday <- NULL
+
+  if (is.element("mon",by)) mon <- as.POSIXlt(timestamp)$mon+1
+  else mon <- NULL
+
+  if (is.element("year",by)) year <- as.POSIXlt(timestamp)$year+1900
+  else year <- NULL
+
+  if (is.element("wday",by)) wday <- as.POSIXlt(timestamp)$wday+1
+  else wday <- NULL
+
+  if (is.element("yday",by)) yday <- as.POSIXlt(timestamp)$yday+1
+  else yday <- NULL
+
+  t <- newTimestamp(year,mon,mday,hour,min,sec,wday,yday)
+  df <- data.frame(t)
+  df$count <- 1
+
+  if (is.element("wday",by))
+  {
+    df$wday <- as.POSIXlt(df$t)$wday
+    result <- aggregate(df$count, by=list(df$t,df$wday), FUN=sum)
+    names(result) <- c("timestamp","wday","count")
+    weekdays <- c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+    result$wday <- weekdays[result$wday+1]
+    return(result)
+  }
+  result <- aggregate(df$count, by=list(df$t), FUN=sum)
+  names(result) <- c("timestamp","count")
+  return(result)
+}
 
 # STIA
 STIA <- function(T=NULL,S=NULL)
@@ -409,54 +461,14 @@ spatialIntersection <- function(lonA, lonB, latA, latB)
   return(areaAB/areaA)
 }
 
-groupFrequency <- function(timestamp,value=NULL,by,fun=sum)
-{
-  sec <- as.POSIXlt(timestamp)$sec
-  min <- as.POSIXlt(timestamp)$min
-  hour <- as.POSIXlt(timestamp)$hour
-  mday <- as.POSIXlt(timestamp)$mday
-  mon <- as.POSIXlt(timestamp)$mon
-  year <- as.POSIXlt(timestamp)$year
-  wday <- as.POSIXlt(timestamp)$wday
-  yday <- as.POSIXlt(timestamp)$yday
-
-  mon <- mon+1
-  year <- year+1900
-  wday <- wday+1
-  yday <- yday+1
-
-  by2 <- list()
-  for (i in 1:length(by))
-  {
-    by2[[by[[i]]]] <- eval(parse(text=by[[i]]))
-  }
-
-  if (is.null(value))
-  {
-    count <- 1
-    df <- data.frame(year, mon, mday, hour, min, sec, wday, yday, count)
-    return(aggregate(df$count, by=by2, FUN=fun))
-  } else
-  {
-    df <- data.frame(year, mon, mday, hour, min, sec, wday, yday, value)
-    return(aggregate(df$value, by=by2, FUN=fun))
-  }
-}
-
-
-
-# getFormat <- function(string)
-# {
-#   if (string == "sec") return ("%S")
-#   if (string == "min") return ("%M")
-#   if (string == "hour") return ("%H")
-#   if (string == "mday") return ("%d")
-#   if (string == "mon") return ("%m")
-#   if (string == "year") return ("%Y")
-#   if (string == "wday") return ("%u")
-#   if (string == "yday") return ("%j")
-# }
-
+#' Get Basemap
+#'
+#' @param source Google Maps ("google"), OpenStreetMap ("osm") or Stamen Maps ("stamen")
+#' @param maptype Character string providing map theme, which depends on the source
+#' @param bbox Bounding box of the layer (spCoverage)
+#' @param zoom Map zoom (leave it NULL for auto zoom)
+#'
+#' @return A map to be used by ggmap function
 getBaseMap <- function(source, maptype, bbox, zoom=NULL)
 {
   if(is.null(zoom)) zoom <- calc_zoom(bbox)
@@ -468,7 +480,7 @@ getBaseMap <- function(source, maptype, bbox, zoom=NULL)
 }
 
 #' Get Centre
-#' 
+#'
 #' This function receives a bounding box and returns the coordinates of its centre
 #'
 #' @param bbox Bouding box
@@ -481,7 +493,7 @@ getCentre <- function(bbox)
 
 
 #' Bbox to polygon
-#' 
+#'
 #' This function receives a bounding box and returns a dataframe with the coordinates to make a polygon plot
 #'
 #' @param bbox Bouding box
@@ -497,7 +509,7 @@ bboxToPolygon <- function(bbox)
 
 #' Get Extremes
 #'
-#' \code(getExtremes) returns a vector with the maximum and the minimum element of the input vector.
+#' \code{getExtremes} returns a vector with the maximum and the minimum element of the input vector.
 #'
 #' @param v Input vector.
 #'
@@ -509,4 +521,51 @@ bboxToPolygon <- function(bbox)
 getExtremes <- function(v)
 {
   return(c(min(v,na.rm=TRUE), max(v,na.rm=TRUE)))
+}
+
+
+#' New Timestamp
+#'
+#' \code{newTimestamp} creates a timestamp object according to the input
+#'
+#' @param year Year
+#' @param mon Month
+#' @param mday Day of the month
+#' @param hour Hour
+#' @param min Minutes
+#' @param sec Seconds
+#' @param wday Day of the week
+#' @param yday Day of the year
+#' @param tz Time zone
+#'
+#' @return a POSIXlt object
+newTimestamp <- function(year="1900",mon="01",mday="01",hour="00",min="00",sec="00", wday=NULL, yday=NULL, tz="UTC")
+{
+  if(is.null(year)) year <- "1900"
+  if(is.null(mon)) mon <- "01"
+  if(is.null(mday)) mday <- "01"
+  if(is.null(hour)) hour <- "00"
+  if(is.null(min)) min <- "00"
+  if(is.null(sec)) sec <- "00"
+
+  timestamp <- as.POSIXlt(paste(paste(year,mon,mday,sep="-"),paste(hour,min,sec,sep=":"),sep=" "),tz=tz)
+
+  if(!is.null(wday))
+  {
+    wday.current <- timestamp$wday
+    wday.real <- wday
+    mday.current <- timestamp$mday
+    mday.real <- mday.current + (wday.real - wday.current)%%7
+
+    timestamp$mday <- mday.real
+    # since $wday goes from 0-6 instead of 1-7
+    timestamp$wday <- wday.real-1
+  }
+  if(!is.null(yday))
+  {
+    # since $yday goes from 0-364
+    timestamp$yday <- yday-1
+  }
+
+  return(timestamp)
 }

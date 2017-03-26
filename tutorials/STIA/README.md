@@ -2,15 +2,15 @@
 
 ## Introduction
 
-Let’s say we have a hypothesis. We believe that temperature influences on where people like to go in a city. For example: area A is really popular when it’s warm, because there are parks or open air pubs; area B, on the other hand, is most popular when it’s chilly. As area A is busier during summer, we assume the level of noise increases as well, right?
+Let’s say we have a hypothesis. We believe that temperature influences on where people like to go in a city. For example area A is really popular when it’s warm because there are parks or open-air pubs; area B, on the other hand, is most popular when it’s chilly. As area A is busier during summer, we assume the level of noise increases as well, right?
 
-So, what we should do is try to correlate temperature, noise level and place popularity in order to test our hypothesis. For this matter we need at least three different datasets: temperature, noise level and popularity. In this example we are using Weather Underground (temperature), Noise Tube (noise level), geolocated check-ins and posts on Instagram (place popularity) as data sources. Each one of these will become a different sensing layer.
+So, what we should do is try to correlate temperature, noise level and place popularity in order to test our hypothesis. For this matter, we need at least three different datasets: temperature, noise level and popularity. In this example we are using Weather Underground (temperature), Noise Tube (noise level), geolocated check-ins and posts on Instagram (place popularity) as data sources. Each one of these will become a different sensing layer.
 
-**But if we want to measure how one variable correlates to another we shall, first, test if the data has spatial and temporal intersection.** It would be a mistake trying to correlate London’s temperature with Munich’s noise level. “Oh right, when it’s really cold in London, the Germans like to shout on the streets.” The same if we correlated temperature from the 80’s with check-ins from 2016. Basically we need to make sure the sensing layers belong to the same area (to the same city, for instance) and to the same time. That’s why we need the SpatioTemporal Intersection Analysis (STIA).
+**But if we want to measure how one variable correlates to another we shall, first, test if the data has spatial and temporal intersection.** It would be a mistake trying to correlate London’s temperature with Munich’s noise level. “Oh right, when it’s really cold in London, the Germans like to shout on the streets.” The same if we correlated temperature from the 80’s with check-ins from 2016. Basically, we need to make sure the sensing layers belong to the same area (to the same city, for instance) and to the same time. That’s why we need the SpatioTemporal Intersection Analysis (STIA).
 
 ## Prerequisites
 
-For this tutorial we are going to use four Sensing Layers: temperature, noise level, check-ins and Instagram posts. Hence the following files will be needed and can be found in [this repository](https://github.com/FdeFabricio/POC/tree/master/Tutorial/src):
+For this tutorial, we are going to use four Sensing Layers: temperature, noise level, check-ins and Instagram posts. Hence the following files will be needed and can be found in [this repository](https://github.com/FdeFabricio/POC/tree/master/Tutorial/src):
 
 ```
 checkin.dat
@@ -27,7 +27,7 @@ Only after loading the file `POC.R` we will be able to access all functions impl
 # load the main file
 source("../../POC.R")
 ```
-Now we need to load all datasets we are going to use for this tutorial. Each one is in a separate file. A couple of files contain header, the others don't. It depends entirely on the datasets you will be working, so feel free to load data frames as you please.
+Now we need to load all datasets we are going to use for this tutorial. Each one is in a separate file. A couple of files contain a header, the others don't. It depends entirely on the datasets you will be working, so feel free to load data frames as you please.
 
 ```
 # load the data frames
@@ -39,7 +39,7 @@ nt <- read.csv("../src/noisetube.csv", header=TRUE, stringsAsFactors=FALSE)
 
 All of this data frames contain a timestamp column. But if you check using Instagram data frame, for instance, you can see that the class isn't compatible with Date-Time. `str(ig)` returns:
 ```
-'data.frame':	50382 obs. of  7 variables:
+'data.frame':    50382 obs. of  7 variables:
  $ V1: int  18809563 14411317 43075363 189700747 33229978 31086370 61759008 233334335 28364791 358787407 ...
  $ V2: chr  "2013-05-11T12:34:20Z" "2013-05-11T12:35:33Z" "2013-05-11T12:37:12Z" "2013-05-11T12:38:01Z" ...
  $ V3: num  40.7 40.6 40.8 40.7 40.7 ...
@@ -63,7 +63,7 @@ _P.S.: you can note that the ig's and ci's columns have automatically generated 
 
 ## Executing the analysis
 
-The STIA can receive two parameters. For temporal intersection you need to inform a list of all timestamp columns. For spatial it requires a list of a list. The latter has the latitude and longitude columns of each data frame. Both are not required, hence you can run only temporal intersection analysis if you want.
+The STIA can receive two parameters. For temporal intersection, you need to inform a list of all timestamp columns. For spatial it requires a list of a list. The latter has the latitude and longitude columns of each data frame. Both are not required, hence you can run only temporal intersection analysis if you want.
 
 ```
 tempList <- list(checkin=ci$V2, instagram=ig$V2, weatherUn=wu$EST, noiseTube=nt$made_at)
@@ -104,7 +104,7 @@ noiseTube 0.0000000 0.0000000         1
 
 ### Temporal
 
-Analysing temporal data we can see that checkin and instagram are really close, since their intersection is almost total. If we use `tpCoverage()` function to calculate the temporal coverage of both we notice that checkin data goes from "2013-05-11 12:32:54 BRT" to "2013-05-25 01:23:26 BRT" and instagram's goes from "2013-05-11 12:34:20 BRT" to "2013-05-25 01:23:34 BRT". I.e., there is only a difference in minutes between these two data frames, hence so close to 1.
+Analysing temporal data we can see that checkin and instagram are really close since their intersection is almost total. If we use `tpCoverage()` function to calculate the temporal coverage of both we notice that checkin data goes from "2013-05-11 12:32:54 BRT" to "2013-05-25 01:23:26 BRT" and instagram's goes from "2013-05-11 12:34:20 BRT" to "2013-05-25 01:23:34 BRT". I.e., there is only a difference in minutes between these two data frames, hence so close to 1.
 
 Temporal(1,3) = Temporal(2,3) = 1 means that the weatherUn intersects the entire temporal dimension of checkin and instagram data. On the other hand, the last two represents only 3.7% of weatherUn temporal coverage, see Temporal(3,1) and Temporal(3,2). WeatherUn data covers the entire year of 2013.
 
