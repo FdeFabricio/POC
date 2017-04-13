@@ -569,3 +569,37 @@ newTimestamp <- function(year="1900",mon="01",mday="01",hour="00",min="00",sec="
 
   return(timestamp)
 }
+
+groupFrequency <- function(timestamp,value=NULL,by,fun=sum)
+{
+  sec <- as.POSIXlt(timestamp)$sec
+  min <- as.POSIXlt(timestamp)$min
+  hour <- as.POSIXlt(timestamp)$hour
+  mday <- as.POSIXlt(timestamp)$mday
+  mon <- as.POSIXlt(timestamp)$mon
+  year <- as.POSIXlt(timestamp)$year
+  wday <- as.POSIXlt(timestamp)$wday
+  yday <- as.POSIXlt(timestamp)$yday
+
+  mon <- mon+1
+  year <- year+1900
+  wday <- wday+1
+  yday <- yday+1
+
+  by2 <- list()
+  for (i in 1:length(by))
+  {
+    by2[[by[[i]]]] <- eval(parse(text=by[[i]]))
+  }
+
+  if (is.null(value))
+  {
+    count <- 1
+    df <- data.frame(year, mon, mday, hour, min, sec, wday, yday, count)
+    return(aggregate(df$count, by=by2, FUN=fun))
+  } else
+  {
+    df <- data.frame(year, mon, mday, hour, min, sec, wday, yday, value)
+    return(aggregate(df$value, by=by2, FUN=fun))
+  }
+}
