@@ -53,7 +53,7 @@ spCoverage <- function(lon, lat, plotBbox=FALSE, colourBbox="black", plotData=FA
 #' @return A plot with each individual spatial coverage on a base map
 #'
 #' @examples
-#' list <- list(instagram=list,checkin=ci)
+#' list <- list(instagram=ig,checkin=ci)
 #' spCoverageList(list, source="stamen")
 spCoverageList <- function(list, source="google", maptype="terrain")
 {
@@ -449,8 +449,8 @@ spatialIntersection <- function(lonA, lonB, latA, latB)
   coordA <- spCoverage(lon=lonA, lat=latA)
   coordB <- spCoverage(lon=lonB, lat=latB)
 
-  polygonA <- readWKT(paste("POLYGON((",as.character(coordA$lonR[1])," ",as.character(coordA$latR[1]),",",as.character(coordA$lonR[2])," ",as.character(coordA$latR[1]),",",as.character(coordA$lonR[2])," ",as.character(coordA$latR[2]),",",as.character(coordA$lonR[1])," ",as.character(coordA$latR[2]),",",as.character(coordA$lonR[1])," ",as.character(coordA$latR[1]),"))",sep=""))
-  polygonB <- readWKT(paste("POLYGON((",as.character(coordB$lonR[1])," ",as.character(coordB$latR[1]),",",as.character(coordB$lonR[2])," ",as.character(coordB$latR[1]),",",as.character(coordB$lonR[2])," ",as.character(coordB$latR[2]),",",as.character(coordB$lonR[1])," ",as.character(coordB$latR[2]),",",as.character(coordB$lonR[1])," ",as.character(coordB$latR[1]),"))",sep=""))
+  polygonA <- readWKT(paste("POLYGON((",as.character(coordA[1])," ",as.character(coordA[2]),",",as.character(coordA[3])," ",as.character(coordA[2]),",",as.character(coordA[3])," ",as.character(coordA[4]),",",as.character(coordA[1])," ",as.character(coordA[4]),",",as.character(coordA[1])," ",as.character(coordA[2]),"))",sep=""))
+  polygonB <- readWKT(paste("POLYGON((",as.character(coordB[1])," ",as.character(coordB[2]),",",as.character(coordB[3])," ",as.character(coordB[2]),",",as.character(coordB[3])," ",as.character(coordB[4]),",",as.character(coordB[1])," ",as.character(coordB[4]),",",as.character(coordB[1])," ",as.character(coordB[2]),"))",sep=""))
 
   intersectionAB <- gIntersection(polygonA,polygonB)
   if(is.null(intersectionAB)) return(0)

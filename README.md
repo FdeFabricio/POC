@@ -1,49 +1,60 @@
 <a name="top"></a>slkit
 ====
-**An R package for property extraction and analysis of multiple Sensing Layers.**
 
-The popularisation of smartphones and the increased use of mobile applications allow users to become not only consumers but also data producers. Data shared voluntarily by users using their mobile devices can be related to several aspects, including urban ones. Each type of urban data source, including the ones shared by users, can are considered a type of sensing layer. Data shared by users in a participatory fashion through mobile applications opens unprecedented opportunities to generate useful knowledge, identify and solve issues, and provide new services related to urban aspects. Due to the complexity of urban phenomena and the large volume of data that is typically available, stages such as modelling, pre-processing and analysis of sensing layers are essential efforts on urban computing research. However, those tasks can be time-consuming. To help to tackle that issue,  this study presents an R package intended to give support to researchers regarding decision making and evaluation of sensing layers. It provides functions for property extraction and multilayered analysis which can be customised according to one's project needs, helping to leverage new applications that explore the concept of sensing layers.
+**An R package for property extraction and analysis of multiple Sensing Layers**
 
-* [Installation](#instalation)
-* [Property Extraction](#property-extraction)
-  * **Spatial Properties**
-    * [Spatial Coverage](#spatial-coverage---spcoverage)
-    * [Spatial Distribution](#spatial-distribution---spdistribution)
-    * [Spatial Popularity](#spatial-popularity---sppopularity)
-  * **Temporal Properties**
-    * [Temporal Coverage](#temporal-coverage---tpcoverage)
-    * [Temporal Distribution](#temporal-distribution---tpdistribution)
-    * [Temporal Popularity](#temporal-popularity---tppopularity)
-    * [Refresh Rate](#refresh-rate---refreshrate)
-* [Analysis](#analysis)
-  * [STIA](#stia)
+The popularisation of smartphones and the increased use of mobile applications allow users to become not only consumers but also data producers. Data shared voluntarily by users using their mobile devices can be related to several aspects, including urban ones. Each type of urban data source, including the ones shared by users, can are considered a type of sensing layer. Data shared by users in a participatory fashion through mobile applications opens unprecedented opportunities to generate useful knowledge, identify and solve issues, and provide new services related to urban aspects. Due to the complexity of urban phenomena and the large volume of data that is typically available, stages such as modelling, preprocessing and analysis of sensing layers are essential efforts on urban computing research. However, those tasks can be time-consuming. To help to tackle that issue,  this study presents an R package intended to give support to researchers regarding decision making and evaluation of sensing layers. It provides functions for property extraction and multilayered analysis which can be customised according to one's project needs, helping to leverage new applications that explore the concept of sensing layers. [[pdf]](slkit_SBRC2017.pdf)
 
-# Installation
+<hr/>
 
-This package was developed in a way one could edit according to their needs. Therefore it was not registered as an official CRAN package, but a single file one can download and edit it. To import it in your project, download the ``POC.R`` file, insert it into your project folder and import through the ``source`` command. For an example of use, see [STIA Tutorial](https://github.com/FdeFabricio/POC/tree/master/tutorials/STIA).
+- **[Installation](#installation)**
+    - [Examples](#examples)
+- **[Property Extraction](#property-extraction)**
+  - **[Spatial Properties](#spatial-properties)**
+    - [Spatial Coverage - `spCoverage()`](#spatial-coverage---spcoverage)
+    - [Spatial Distribution - `spDistribution()`](#spatial-distribution---spdistribution)
+    - [Spatial Popularity - `spPopularity()`](#spatial-popularity---sppopularity)
+  - **[Temporal Properties](#temporal-properties)**
+    - [Temporal Coverage - `tpCoverage()`](#temporal-coverage---tpcoverage)
+    - [Temporal Distribution - `tpDistribution()`](#temporal-distribution---tpdistribution)
+    - [Temporal Popularity - `tpPopularity()`](#temporal-popularity---tppopularity)
+    - [Refresh Rate - `refreshRate()`](#refresh-rate---refreshrate)
+- **[Analysis](#analysis)**
+    - [STIA](#stia)
+- **[Contribution](#contribution)**
+
+<hr/>
+
+## Installation
+
+This package was developed in a way one could edit according to their needs. Therefore it is not a registered official CRAN package, but a single file one can download and edit it when necessary. To import it into your project, simply download the ``slkit.R`` file, insert it into your project folder and import through the ``source`` command.
 
 ```
-source("POC.R")
+source("slkit.R")
 ```
 
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+#### Examples
 
-# Property Extraction
+For a complete example of slkit use, see [STIA Tutorial](tutorials/STIA). This documentation also provides examples for each property extraction function. The examples use datasets provided on the [data](tutorials/data) folder which simulate real data from social networks and Web APIs  such as Instagram (pictures), Twitter (geolocated tweets), Foursquare (check-ins), [Weather Underground](https://www.wunderground.com) (weather conditions) and [NoiseTube](http://www.noisetube.net) (level of noise).
 
-A property is any spatial or temporal characteristic of a Sensing Layer that can be measured and compared among different layers. This package presents a set of properties, divided into temporal and spatial, and functions to extract them. The list of properties is not fixed and can be expanded when necessary, according to one's study particularities.
+<a href="#top"><img align="right" src="img/backtotop.png" width=20></a>
 
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+## Property Extraction
+
+A property is any spatial or temporal characteristic of a Sensing Layer that can be measured and compared to different layers. This package presents a set of properties, divided into temporal and spatial, and functions to extract them. The list of properties is not fixed and can be expanded when necessary, according to one's study particularities.
+
+<a href="#top"><img align="right" src="img/backtotop.png" width=20></a>
 
 
-## Spatial Properties
+### Spatial Properties
 
-These properties quantify the relationship with the geographic space.
+These properties quantify the relationship with geographic information.
 
-### Spatial Coverage - `spCoverage()`
+#### Spatial Coverage - `spCoverage()`
 
 This property represents the area the data is inserted into. The function `spCoverage()` receives the longitude and latitude columns and returns the extreme coordinates (maximum and minimum), forming a bounding box.
 
-#### Parameters
+##### Parameters
 - **lon:** longitude column
 - **lat:** latitude column
 - **plotBbox:** if TRUE, it plots the bounding box (default is FALSE)
@@ -54,90 +65,90 @@ This property represents the area the data is inserted into. The function `spCov
 - **maptype:** character string providing map theme, which depends on the source (default is "terrain")
 - **zoom:** map zoom (leave it NULL for auto zoom)
 
-#### Example
-Before anything we should source the file and any dataset.
+##### Example
+Before anything we should import the slkit and a dataset.
 ```
-source("POC.R")
-ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+source("slkit.R")
+ig <- read.table("tutorials/data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 ```
 
 **1. `spCoverage(ig$lon, ig$lat)` returns:**
 ```
-‏     left   bottom     right       top
+     left   bottom     right       top
 -74.06077 40.63317 -73.76324  40.84902
 ```
 **2. `spCoverage(ig$lon, ig$lat, TRUE)` returns:**
 
-<a href="/img/spCoverage1.png"><img src="/img/spCoverage1.png" height="350"></a>
+<a href="img/spCoverage1.png"><img src="img/spCoverage1.png" height="350"></a>
 
 **3. `spCoverage(ig$lon, ig$lat, plotBbox=TRUE, plotData=TRUE, source="stamen")` returns:**
 
-<a href="/img/spCoverage2.png"><img src="/img/spCoverage2.png" height="350"></a>
+<a href="img/spCoverage2.png"><img src="img/spCoverage2.png" height="350"></a>
 
 **4. `spCoverage(ig$lon, ig$lat, TRUE, "red", TRUE, "green", source="stamen",maptype="toner-background")` returns:**
 
-<a href="/img/spCoverage3.png"><img src="/img/spCoverage3.png" height="350"></a>
+<a href="img/spCoverage3.png"><img src="img/spCoverage3.png" height="350"></a>
 
 It is also possible to plot the spatial coverage of multiple layers using `spCoverageList()`. The input is a list with named dataframes. It is important that every df has a lon and lat columns.
 
 ```
-source("POC.R")
-ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
-ci <- read.table("data/checkin1.dat", header=TRUE, stringsAsFactors=FALSE)
-list <- list(instagram=ig,checkin=ci)
+source("slkit.R")
+ig <- read.table("tutorials/data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+ci <- read.table("tutorials/data/checkin.dat", header=TRUE, stringsAsFactors=FALSE)
+list <- list(instagram=ig, checkin=ci)
 spCoverageList(list, source="stamen")
 ```
-<a href="/img/spCoverage4.png"><img src="/img/spCoverage4.png" height="350"></a>
+<a href="img/spCoverage4.png"><img src="img/spCoverage4.png" height="350"></a>
 
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+<a href="#top"><img align="right" src="img/backtotop.png" width=20></a>
 
-### Spatial Distribution - `spDistribution()`
+#### Spatial Distribution - `spDistribution()`
 
 This property returns the percentage of the spatial coverage that has data associated with. It first divides the space into rectangles and creates a matrix to represent it. Then it processes all the data points, checking in which rectangle each point is inserted into. It then returns the percentage of rectangles with data. It can also return a plot with the data rectangles coloured.
 
 The figure below illustrates how the spatial coverage is divided into rectangles.
 
-<a href="/img/spDistribution1.png"><img src="/img/spDistribution1.png" height="350"></a>
+<a href="img/spDistribution1.png"><img src="img/spDistribution1.png" height="350"></a>
 
 A high spatial distribution means that the data are well distributed through space, which is positive when evaluating layers.
 
-#### Parameters
+##### Parameters
 - **lon:** longitude column
 - **lat:** latitude column
 - **nx:** number of horizontal rectangles the area will be divided into
 - **ny:** number of vertical rectangles the area will be divided into
 - **plot:** TRUE to plot the rectangles with data (default is FALSE)
 - **col:** colour of the plot (default is "red")
-- **source:** source of the basemap. It can be Google Maps ("google"), which is the default, OpenStreetMap ("osm") or Stamen Maps ("stamen")
+- **source:** source of the base map. It can be Google Maps ("google"), which is the default, OpenStreetMap ("osm") or Stamen Maps ("stamen")
 - **maptype:** character string providing map theme, which depends on the source (default is "terrain")
 
-#### Example
+##### Example
 
 ```
-source("POC.R")
-ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+source("slkit.R")
+ig <- read.table("tutorials/data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 ```
 Using the ggmap's crime dataset, `spDistribution(crime$lon,crime$lat,20,20,plot=TRUE)`, we can see that the data is inserted into only 3.75% of the spatial coverage.
 
-<a href="/img/spDistribution2.png"><img src="/img/spDistribution2.png" height="350"></a>
+<a href="img/spDistribution2.png"><img src="img/spDistribution2.png" height="350"></a>
 
-We can also see that the more we increase the resolution, i.e., the number of horizontal and vertical rectangles (nx and ny), the more precise it gets. The pictures bellow divide the same layer into 100 and 2500 rectangles, returning 98% and 61.96%, respectively.
+We can also see that the more we increase the resolution, i.e., the number of horizontal and vertical rectangles (nx and ny), the more precise it gets. The pictures below divide the same layer into 100 and 2500 rectangles, returning 98% and 61.96%, respectively.
 
 `spDistribution(ig$lon,ig$lat,10,10,plot=TRUE, source="stamen")`
 
-<a href="/img/spDistribution3.png"><img src="/img/spDistribution3.png" height="350"></a>
+<a href="img/spDistribution3.png"><img src="img/spDistribution3.png" height="350"></a>
 
 `spDistribution(ig$lon,ig$lat,50,50,plot=TRUE, source="stamen")`
 
-<a href="/img/spDistribution4.png"><img src="/img/spDistribution4.png" height="350"></a>
+<a href="img/spDistribution4.png"><img src="img/spDistribution4.png" height="350"></a>
 
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+<a href="#top"><img align="right" src="img/backtotop.png" width=20></a>
 
-### Spatial Popularity - `spPopularity()`
+#### Spatial Popularity - `spPopularity()`
 
 This property identifies areas that have high data density, hence popular areas. Layers may have high spatial distribution (they cover the majority of the space) but most of the data is clustered in a specific region. In such cases, it might not be a good idea to assume the behaviour perceived in the popular area corresponds to the entire spatial extension of that layer. The output is a density map.
 
-#### Parameters
+##### Parameters
 - **lon:** longitude column
 - **lat:** latitude column
 - **source:** source of the basemap. It can be Google Maps ("google"), which is the default, OpenStreetMap ("osm") or Stamen Maps ("stamen")
@@ -146,35 +157,35 @@ This property identifies areas that have high data density, hence popular areas.
 - **colLow:** Colour of the low density area (default is "yellow")
 - **hideMap:** TRUE to only plot the popularity without the background map (default is FALSE)
 
-#### Example
+##### Example
 
 ```
-source("POC.R")
-ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+source("slkit.R")
+ig <- read.table("tutorials/data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 spPopularity(ig$lon,ig$lat,"stamen","toner","red","green")
 ```
-<a href="/img/spPopularity.png"><img src="/img/spPopularity.png" height="350"></a>
+<a href="img/spPopularity.png"><img src="img/spPopularity.png" height="350"></a>
 
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+<a href="#top"><img align="right" src="img/backtotop.png" width=20></a>
 
-## Temporal Properties
+### Temporal Properties
 
 This set of properties is a mechanism to characterise how data behave considering time as a factor.
 
-### Temporal Coverage - `tpCoverage()`
+#### Temporal Coverage - `tpCoverage()`
 
-This property represents the temporal interval the data is inserted into. The function `spCoverage()` extracts the range from a timestamp (POSIX*) column and returns a vector with the earliest and latest data. It can also return the extent of the interval if `printDiff` is set as TRUE.
+This property represents the time interval the data is inserted into. The function `spCoverage()` extracts the range from a timestamp (POSIX*) column and returns a vector with the earliest and latest data. It can also return the extent of the interval if `printDiff` is set as TRUE.
 
-#### Parameters
+##### Parameters
 - **column:** timestamp column
 - **printDiff:** if TRUE, it prints the time difference (default is FALSE)
 
-#### Example
-Before anything, we should source the file and any dataset. We also need to convert the timestamp column to a POSIXct or POSIXlt format, since originally its class is character.
+##### Example
+Before anything, we should source the file and any data set. We also need to convert the timestamp column to a POSIXct or POSIXlt format, since originally its class is character.
 
 ```
-source("POC.R")
-ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+source("slkit.R")
+ig <- read.table("tutorials/data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 ig$timestamp <- as.POSIXct(ig$timestamp, format="%Y-%m-%dT%H:%M:%SZ")
 ```
 **1.** `tpCoverage(ig$timestamp)` returns:
@@ -188,24 +199,24 @@ ig$timestamp <- as.POSIXct(ig$timestamp, format="%Y-%m-%dT%H:%M:%SZ")
 Time difference of 13.53419 days
 [1] "2013-05-11 12:34:20 BRT" "2013-05-25 01:23:34 BRT"
 ```
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+<a href="#top"><img align="right" src="img/backtotop.png" width=20></a>
 
-### Temporal Distribution - `tpDistribution()`
+#### Temporal Distribution - `tpDistribution()`
 
 This property returns the percentage of the temporal coverage that has data associated with. It first divides the time into intervals, according to a time resolution, and aggregate the original data in each interval. It then returns the percentage of intervals with data. It can also return the dataframes with the total intervals inside the temporal coverage and the intervals in which there are data.
 
 A high temporal distribution means that the data are well distributed through time, which is positive when evaluating layers.
 
-#### Parameters
+##### Parameters
 - **column:** timestamp column
 - **res:** time resolution: "yearly", "montly", "daily", "hourly", "minutely" or "secondly"
 - **verbose:** if TRUE it also returns the two dataframes with the data intervals used for the percentage calculation
 
-#### Example
+##### Example
 
 ```
-source("POC.R")
-ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+source("slkit.R")
+ig <- read.table("tutorials/data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 ig$timestamp <- as.POSIXct(ig$timestamp, format="%Y-%m-%dT%H:%M:%SZ")
 
 tpDistribution(ig$time, "yearly")
@@ -225,23 +236,23 @@ If we check the temporal coverage we can see that this layer has data from 11-Ma
 
 `tpDistribution(crime$time, "hourly")` returns 0.998971. It means that every hour there is at least one crime in Houston, considering this layer with Houston crimes from January 2010 to August 2010.
 
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+<a href="#top"><img align="right" src="img/backtotop.png" width=20></a>
 
-### Temporal Popularity - `tpPopularity()`
+#### Temporal Popularity - `tpPopularity()`
 
 This property identifies periods that have high data density, hence popular times. Layers may have more data during a certain period of the day (more check-ins during the evenings), the week (more traffic incidents on weekdays), and so on. Therefore a temporal popularity property can highlight periods of time that have higher data density than others. The method output is a dataframe with the grouped period and the number of data of such period.
 
 Let's say we have two datasets: one about rubbish level on streets and the other about check-ins. The idea is to try to understand if a great concentration of people can increase the level of street litter (are busy areas dirtier?). The first dataset is a collaborative sensing platform, where users post where they found rubbish on the streets. This layer, in particular, has way more data during the day, since at night when it's dark, it's difficult to spot litter. On the other hand, the second dataset has more data during the night, since people like to check-in when they are going out. In this case, spotting such disparity regarding the temporal popularity the correlation would not be accurate. As alternative one could correlate both layers splitting the day into periods (day and night, for instance) and make a correlation of each period separately.
 
-#### Parameters
+##### Parameters
 - **timestamp:** timestamp column
 - **by:** a vector with the parameters to group the data by time frames ("year","mon","mday","hour",min","sec","wday","yday")
 
-#### Example
+##### Example
 
 ```
-source("POC.R")
-ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+source("slkit.R")
+ig <- read.table("tutorials/data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 ig$timestamp <- as.POSIXct(ig$timestamp, format="%Y-%m-%dT%H:%M:%SZ")
 ```
 
@@ -252,16 +263,16 @@ tpPop <- tpPopularity(ig$timestamp, by=c("year","mon","mday"))
 ggplot(data=tpPop, aes(timestamp,count))+geom_bar(stat="identity")
 ```
 
-<a href="/img/tpPopularity1.png"><img src="/img/tpPopularity1.png" height="350"></a>
+<a href="img/tpPopularity1.png"><img src="img/tpPopularity1.png" height="350"></a>
 
-We can also see the popularity regarding the day of the week (although this dataset only has 13 complete days of data).
+We can also see the popularity regarding the day of the week (although this data set only has 13 complete days of data).
 
 ```
 tpPop <- tpPopularity(ig$timestamp, by=c("year","mon","wday"))
 ggplot(data=tpPop,aes(timestamp,count))+geom_bar(stat="identity")+scale_x_datetime(labels = date_format("%A\n%b %Y"))
 ```
 
-<a href="/img/tpPopularity2.png"><img src="/img/tpPopularity2.png" height="350"></a>
+<a href="img/tpPopularity2.png"><img src="img/tpPopularity2.png" height="350"></a>
 
 With crimes dataset...
 
@@ -270,32 +281,32 @@ tpPop <- tpPopularity(crime$time, by=c("year","mon","wday"))
 ggplot(data=tpPop, aes(wday,count,fill=format(timestamp,"%b")))+geom_bar(stat="identity",position = "dodge")+scale_fill_discrete(name="Month 2010")+xlab("Weekday")
 ```
 
-<a href="/img/tpPopularity3.png"><img src="/img/tpPopularity3.png" height="350"></a>
+<a href="img/tpPopularity3.png"><img src="img/tpPopularity3.png" height="350"></a>
 
 ```
 ggplot(data=tpPop, aes(format(timestamp,"%b"),count,fill=wday))+geom_bar(stat="identity",position = "dodge")+scale_fill_discrete(name="Weekday")+xlab("Month")
 ```
 
 
-<a href="/img/tpPopularity4.png"><img src="/img/tpPopularity4.png" height="350"></a>
+<a href="img/tpPopularity4.png"><img src="img/tpPopularity4.png" height="350"></a>
 
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+<a href="#top"><img align="right" src="img/backtotop.png" width=20></a>
 
-### Refresh Rate - `refreshRate()`
+#### Refresh Rate - `refreshRate()`
 
 This property represents how distant the data are in time. It calculates the arithmetic mean of the time difference between consecutive measurements. Besides the mean, the standard deviation and coefficient of variation are also returned. The output is provided in seconds, therefore unit conversion may be needed.
 
 The refresh rate can be extracted generally or by grouping data since it can vary by the hours of the day, days of the week, and so on. This extraction also provides a verbose output which provides a dataframe that can be used to plot the refresh rate through time.
 
-#### Parameters
+##### Parameters
 - **timestamp:** timestamp column
 - **by:** a vector with the parameters to group the data by time frames ("year","mon","mday","hour",min","sec","wday","yday")
 - **verbose:** if TRUE it also returns the dataframe used in the extraction which can be used in a plot
 
-#### Example
+##### Example
 ```
-source("POC.R")
-ig <- read.table("data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
+source("slkit.R")
+ig <- read.table("tutorials/data/instagram.dat", header=TRUE, stringsAsFactors=FALSE)
 ig$timestamp <- as.POSIXct(ig$timestamp, format="%Y-%m-%dT%H:%M:%SZ")
 refreshRate(ig$timestamp)
 # $mean
@@ -377,18 +388,22 @@ day24$hms <- as.POSIXct(day24$hms, format = "%H:%M:%S")
 ggplot(data=day24, aes(timestamp, diff))+geom_line()
 ```
 
-<a href="/img/refreshRate.png"><img src="/img/refreshRate.png" height="350"></a>
+<a href="img/refreshRate.png"><img src="img/refreshRate.png" height="350"></a>
 
 Although it seems that this lack of data is not compromising the entire layer, we can use this information to make decisions (for instance we could have another similar layer without the data gap and this property would probably influence our choice).
 
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+<a href="#top"><img align="right" src="img/backtotop.png" width=20></a>
 
-# Analysis
+## Analysis
 
-After analysing each dataset individually it is important to see how the selected layers relate to each other. A multilayered analysis intends to attest if the variable represented by one layer have any effect on another layer.
+After analysing each data set individually it is important to see how the selected layers relate to each other. A multilayered analysis intends to attest if the variable represented by one layer have any effect on another layer.
 
 ### STIA
 
-SpatioTemporal Intersection Analysis (STIA) aims to measure the level of intersection between different layers regarding spatial and temporal data. The function receives the different layers as parameters and returns an intersection matrix with the percentage of intersection between each layer. This analysis is fundamental previously a multilayered correlation since one must make sure that there is no incongruity between layers (e.g., data of different periods of time or of different cities). [See STIA tutorial for more information.](https://github.com/FdeFabricio/POC/tree/master/tutorials/STIA)
+SpatioTemporal Intersection Analysis (STIA) aims to measure the level of intersection between different layers regarding spatial and temporal data. The function receives the different layers as parameters and returns an intersection matrix with the percentage of intersection between each layer. This analysis is fundamental previously a multilayered correlation since one must make sure that there is no incongruity between layers (e.g., data of different periods of time or of different cities). [See STIA tutorial for more information.](tutorials/STIA)
 
-<a href="#top"><img align="right" src="/img/backtotop.png" width=20></a>
+<a href="#top"><img align="right" src="img/backtotop.png" width=20></a>
+
+## Contribution
+
+If you have questions or any suggestion, feel free to open an issue. This tool was implemented thinking about possibilities of use considering previous experience and related work on Sensing Layers, therefore any discussion about improvement is welcomed.
